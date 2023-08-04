@@ -1,0 +1,10 @@
+#!/bin/bash
+#BSUB -q   pruebav100
+#BSUB -m   mn462 
+#BSUB -n   1
+#BSUB -oo  compilar462.out
+#BSUB -eo  compilar462.err
+export RUN_DIR=/tmpu/mcg_g/cafe_a/VIS3D/VisPlano
+cd $RUN_DIR
+module load gcc/5.3.1
+make
