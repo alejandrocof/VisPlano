@@ -460,15 +460,18 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	//svg.add( Shape().Use("mapa.svg","mapa") );   // commented out by CAFE on 05042021
 	svg.add( Shape().Use("mapa.svg","mapa") );
 	svg.add( Shape().Mask(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()).fill(192, 192, 210) );
-	stringstream txt_time;
-	txt_time << "Time:";
-	//*dt
-	//cout<<"sigfigs(dt)="<<sigfigs(dt)<<" dt="<<dt<<endl;
-	txt_time << fixed << setprecision(digTime) << NTST*dt << "s";
-	svg.add(Shape().Text( image_width/2.0,
-						  image_height/20.0, txt_time.str())
-			.align( "middle" ).fontSize(2.0*T().textHeight)
-			.fontFamily( "Times" ) );
+
+	if(NTST>=0.0){
+		stringstream txt_time;
+		txt_time << "Time:";
+		//*dt
+		//cout<<"sigfigs(dt)="<<sigfigs(dt)<<" dt="<<dt<<endl;
+		txt_time << fixed << setprecision(digTime) << NTST*dt << "s";
+		svg.add(Shape().Text( image_width/2.0,image_height/20.0, txt_time.str())
+				.align( "middle" ).fontSize(2.0*T().textHeight)
+				.fontFamily( "Times" ) );
+	}
+
 	double colorBarX=21.0*image_width/24.0;
 	double colorBarY=1.0*image_height/8.0;
 	double colorBarWidth=1.0*image_width/40.0;
@@ -515,7 +518,7 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 		polygon.push_back( T().x(x) );
 		polygon.push_back( T().y(y) );
 
-		cout<<"alpha="<<alpha<<" ("<<x<<", "<<y<<") "<< T().pointHeight << endl;
+//		cout<<"alpha="<<alpha<<" ("<<x<<", "<<y<<") "<< T().pointHeight << endl;
 	}
 
 
@@ -899,22 +902,27 @@ int main(int argc, char *argv[])
 	digTime=sigfigs(dt*infoData.NTISKP());
 
 	string nFilePrefix;
-	for(int timeIndex=stepIndexIni;timeIndex<stepIndexEnd;timeIndex+=dstepIndex)
-	{
+	for(unsigned int i=0;i<cdat.data.size();i++){
+		if(  cdat.data[i].px.size()==0
+			 && cdat.data[i].py.size()==0
+			 && cdat.data[i].pz.size()==0 ){
+			continue;
+		}
 
-		for(unsigned int i=0;i<cdat.data.size();i++){
-			if(  cdat.data[i].px.size()==0
-				 && cdat.data[i].py.size()==0
-				 && cdat.data[i].pz.size()==0 ){
-				continue;
-			}
+		if( cdat.data[i].comp==X )
+			nFilePrefix="Vx3D";
+		if( cdat.data[i].comp==Y )
+			nFilePrefix="Vy3D";
+		if( cdat.data[i].comp==Z )
+			nFilePrefix="Vz3D";
+//#pragma omp parallel for
+//#pragma omp parallel for num_threads(2)
+//#pragma omp parallel for num_threads(2) collapse(2)
+//#pragma omp parallel for collapse(2)
+		for(int timeIndex=stepIndexIni;timeIndex<stepIndexEnd;timeIndex+=dstepIndex)
+		{
 
-			if( cdat.data[i].comp==X )
-				nFilePrefix="Vx3D";
-			if( cdat.data[i].comp==Y )
-				nFilePrefix="Vy3D";
-			if( cdat.data[i].comp==Z )
-				nFilePrefix="Vz3D";
+
 			//double min=cdat.data[i].min;
 			//double max=cdat.data[i].max;
 
@@ -1042,20 +1050,20 @@ int main(int argc, char *argv[])
 						lineZ[x * 3 + 2] = static_cast<uint8_t>(b);
 					}
 					//cout<<endl;
-//					pngoutZ.write(lineZ.data(), static_cast<size_t>(SX));
+					pngoutZ.write(lineZ.data(), static_cast<size_t>(SX));
 				}
 
-//				make_svg_(timeIndex,"./imagenes/"+nameSVG_Z.str(),"./Z/"+namePNG_Z.str(),VELXMIN,VELXMAX);
+				make_svg_(timeIndex,"./imagenes/"+nameSVG_Z.str(),"./Z/"+namePNG_Z.str(),VELXMIN,VELXMAX);
 
 			}
 
 			auto t1 = clk::now();
 			auto diff = duration_cast<microseconds>(t1-t0);
-//			std::cout <<" tiempo de dibujado "<<fixed<< diff.count() << "us"<<endl;
+			std::cout <<" tiempo de dibujado "<<fixed<< diff.count() << "us"<<endl;
 		}
 
 
-	}
+	}//fin for tiempo
 
 	float velMaxZ = -std::numeric_limits<float>::max();
 	float velMinZ =  std::numeric_limits<float>::max();
@@ -1220,7 +1228,7 @@ int main(int argc, char *argv[])
 		//cout<<endl;
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
-	make_svg_(0,"./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
+	make_svg_(-1,"./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
 
 
 	auto t1T = clk::now();
