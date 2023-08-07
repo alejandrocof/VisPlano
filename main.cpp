@@ -154,7 +154,8 @@ void initialize_visualization_(string path){
 	cout<<"***********initialize_visualization_"<<endl;
 #endif
 	ifstream file;
-	file.open(path+"/input_vis.dat", std::ifstream::in);
+	//file.open(path+"/input_vis.dat", std::ifstream::in);
+	file.open("input_vis.dat", std::ifstream::in);
 	if (!file.is_open()){
 		cout<<"No se pudo leer el archivo: "+path+"/input_vis.dat"<<endl;
 	}
