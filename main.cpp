@@ -1076,23 +1076,23 @@ int main(int argc, char *argv[])
 //	velMaxZ=0.002;
 	NiceScale nsMax(0,velMaxZ);
 
+
 	cout<<"velMinZ="<<velMinZ<<endl;
 	cout<<"velMaxZ="<<velMaxZ<<endl;
 
 	int CX=SX-1;
 	int CY=SY-1;
 	//vector<unsigned char> caseCorners( CX*CY,0 );
-
-
-
 	//cout<<"**** xy(0,0)->"<<img.xy(0,0).lon<<" "<<img.xy(0,0).lat<<endl;
 	//cout<<"**** xy(100,100)->"<<img.xy(100,100).lon<<" "<<img.xy(100,100).lat<<endl;
-	int N=nsMax.N();
-	vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
-	//for ( int k=1; k<N-1; k++ ){
-	for ( auto valThreshold: valsThreshold ){
+
+	NiceScale nsThresholdMax(0,velMaxZ,12);
+	int N=nsThresholdMax.N();
+	for ( int k=1; k<N-1; k++ ){
+		float valThreshold=nsThresholdMax.niceMin + (float)k*nsThresholdMax.tickSpacing;
+	//vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
+	//for ( auto valThreshold: valsThreshold ){
 		vector< vector<Coord> > coords;
-		//float valThreshold=nsMax.niceMin + (float)k*nsMax.tickSpacing;
 		for (int j = 0; j < CY; j++){
 			for (int i = 0; i < CX; i++){
 				int i0 = i + SX*j;
@@ -1194,7 +1194,7 @@ int main(int argc, char *argv[])
 			//cout<<endl;
 		}
 		Color _color;
-		double f = (valThreshold-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
+		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
 		colorMap(f, _color.r, _color.g, _color.b);
 		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
 		color.push_back(_color);
