@@ -44,14 +44,16 @@ using std::uint8_t;
 using std::uint32_t;
 using std::size_t;
 
-std::vector<uint8_t> lutColor;
+//std::vector<uint8_t> lutColor;
 
-//double latlon2m=111320.0;
-double latlon2m=104270.0;
+double latlon2m=111320.0;
+//double latlon2m=104270.0;
 double VELXMIN;
 double VELXMAX;
 double epi_lon;
 double epi_lat;
+int xhip;
+int yhip;
 int image_width;
 int image_height;
 string nameFileCSV;
@@ -74,11 +76,35 @@ int ndigTI;//5 número de dígitos para el índice del tiempo, los datos mas act
 
 double theta=0.0;
 
-struct Color{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-};
+//push(153,102,255);//min
+//push(0,0,255);
+//push(0,255,0);
+//push(255,255,255);
+//push(255,255,0);
+//push(255,102,0);
+//push(255,0,0);//max
+lut colorMap1(
+		vector<Color>{
+			Color(153,102,255),
+			Color(0,0,255),
+			Color(0,255,0),
+			Color(255,255,255),
+			Color(255,255,0),
+			Color(255,102,0),
+			Color(255,0,0),
+		}
+		);
+
+lut colorMap2(
+		vector<Color>{
+			Color(0,0,255),
+			Color(0,255,255),
+			Color(0,255,0),
+			Color(255,255,0),
+			Color(255,0,0),
+		}
+		);
+
 
 inputData infoData;
 ImgT img;
@@ -119,26 +145,26 @@ int calculaCifras(int num){
 	return contador;
 }
 
-void pushColor(uint8_t r,uint8_t g,uint8_t b){
-	lutColor.push_back(r);
-	lutColor.push_back(g);
-	lutColor.push_back(b);
-}
+//void pushColor(uint8_t r,uint8_t g,uint8_t b){
+//	lutColor.push_back(r);
+//	lutColor.push_back(g);
+//	lutColor.push_back(b);
+//}
 
-void colorMap(double lambda, uint8_t &r, uint8_t &g, uint8_t &b){
-	//double lambda=(val-minimumValue)/(maximumValue-minimumValue);
+//void colorMap(double lambda, uint8_t &r, uint8_t &g, uint8_t &b){
+//	//double lambda=(val-minimumValue)/(maximumValue-minimumValue);
 
-	if(lambda>1.0)lambda=1.0;
-	if(lambda<0.0)lambda=0.0;
-	int size=lutColor.size()/3;
-	double f=lambda*(size-1);
-	double indice=floor(f);
-	double delta=f-indice;
-	r = lutColor[3*indice] + delta*( lutColor[3*(indice+1)]-lutColor[3*indice] );
-	g = lutColor[3*indice+1] + delta*( lutColor[3*(indice+1)+1]-lutColor[3*indice+1] );
-	b = lutColor[3*indice+2] + delta*( lutColor[3*(indice+1)+2]-lutColor[3*indice+2] );
-	//cout<< lambda <<" "<<r<<" "<<g<<" "<<b<<endl;
-}
+//	if(lambda>1.0)lambda=1.0;
+//	if(lambda<0.0)lambda=0.0;
+//	int size=lutColor.size()/3;
+//	double f=lambda*(size-1);
+//	double indice=floor(f);
+//	double delta=f-indice;
+//	r = lutColor[3*indice] + delta*( lutColor[3*(indice+1)]-lutColor[3*indice] );
+//	g = lutColor[3*indice+1] + delta*( lutColor[3*(indice+1)+1]-lutColor[3*indice+1] );
+//	b = lutColor[3*indice+2] + delta*( lutColor[3*(indice+1)+2]-lutColor[3*indice+2] );
+//	//cout<< lambda <<" "<<r<<" "<<g<<" "<<b<<endl;
+//}
 
 template <typename T>
 void getdata(ifstream &file, T &x){
@@ -182,8 +208,8 @@ void initialize_visualization_(string path){
 
 
 void transformation_settings_( double DH, int NXSC, int NYSC, int LX, int LY){
-	double epicx=(double)(NXSC+infoData.xHip())*(DH);
-	double epicy=(double)(NYSC+infoData.yHip())*(DH);
+	double epicx=(double)(NXSC+xhip)*(DH);
+	double epicy=(double)(NYSC+yhip)*(DH);
 	nx=(LX);
 	ny=(LY);
 	lx=(double)(LX)*(DH);
@@ -213,7 +239,7 @@ void transformation_settings_( double DH, int NXSC, int NYSC, int LX, int LY){
 	cout<<"*****transformation_settings*****"<<endl;
 	cout<<"DH="<<DH<<" LX="<<LX<<" LY="<<LY<<endl;
 	cout<<"NXSC="<<NXSC<<" NYSC="<<NYSC<<endl;
-	cout<<"x_hip="<<infoData.xHip()<<" y_hip="<<infoData.yHip()<<endl;
+	cout<<"x_hip="<<xhip<<" y_hip="<<yhip<<endl;
 	cout<<"epicx="<<epicx<<" epicy="<<epicy<<endl;
 	cout<<"Epicentro: ("<<epi_lon<<" ,"<<epi_lat<<")"<<endl;
 	cout<<"Imagen tamaño: ("<<image_width<<"x"<<image_height<<") "<<lx<<" "<<ly<<endl;
@@ -359,7 +385,7 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	//nameSVG_Z<<"imagen"<<setw(ndigTI)<<setfill('0')<<NTST;
 	//nameSVG_Z<<".svg";
 
-	lut colorMap;
+
 
 	int image_width=T().width;
 	int image_height=T().height;
@@ -367,7 +393,7 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 	//SVG2D svg(nameSVG_Z.str(),image_width,image_height);
 	SVG2D svg(nameSVG,image_width,image_height);
-	svg.add(Shape().ColorMap(colorMap,"ColorMap"));
+	svg.add(Shape().ColorMap(colorMap1,"ColorMap"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
 
@@ -380,8 +406,8 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	double dx=infoData.NEDX()-infoData.NBGX()+1;
 	double dy=infoData.NEDY()-infoData.NBGY()+1;
 
-	double Tx=T().x(epi_lon+(x-infoData.NXSC()-infoData.xHip())*dh/latlon2m);
-	double Ty=T().y(epi_lat+(y-infoData.NYSC()-infoData.yHip()+dy)*dh/latlon2m);
+	double Tx=T().x(epi_lon+(x-infoData.NXSC()-xhip)*dh/latlon2m);
+	double Ty=T().y(epi_lat+(y-infoData.NYSC()-yhip+dy)*dh/latlon2m);
 
 	double Tdx=T().sx(dx*dh/latlon2m);
 	double Tdy=T().sy(dy*dh/latlon2m);
@@ -541,6 +567,44 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 	}
 
+//	vector<Coord> estaciones={
+//		Coord(-93.94, 14.94),
+//		Coord(-96.49, 15.67),
+//		Coord(-92.27, 14.92),
+//		Coord(-96.7, 17.07),
+//		Coord(-96.72, 17.07),
+//		Coord(-94.54, 17.99),
+//		Coord(-98.17, 19.04),
+//		Coord(-98.56, 17.8),
+//		Coord(-96.9, 19.53),
+//		Coord(-100.09, 17),
+//		Coord(-99.89, 16.87),
+//		Coord(-100.16, 18.9),
+//		Coord(-100.43, 17.21),
+//		Coord(-99.82, 16.91),
+//		Coord(-100.72, 20.04),
+//		Coord(-101.26, 17.54),
+//		Coord(-94.88, 17.09),
+//		Coord(-93.12, 16.78),
+//		Coord(-94.42, 18.03),
+//		Coord(-97.36, 18.42),
+//		Coord(-98.63, 19.07),
+//		Coord(-98.13, 16.39),
+//		Coord(-97.8, 17.83),
+//		Coord(-98.57, 17.56),
+//		Coord(-99.62, 17.92),
+//		Coord(-101.46, 17.61),
+//		Coord(-99.04, 20.3)
+//	};
+
+//	for(const Coord& est: estaciones ){
+//		double x=T().x(est.lon);
+//		double y=T().y(est.lat);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(255,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//	}
+
+
 	/*
 	//ubicacion plano
 	double div=10;
@@ -659,6 +723,123 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 }
 
+
+void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
+
+	int image_width=T().width;
+	int image_height=T().height;
+
+	SVG2D svg(nameSVG,image_width,image_height);
+	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
+	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
+
+	double x=infoData.NBGX()-1;
+	double y=infoData.NBGY()-1;
+	double dx=infoData.NEDX()-infoData.NBGX()+1;
+	double dy=infoData.NEDY()-infoData.NBGY()+1;
+
+	double Tx=T().x(epi_lon+(x-infoData.NXSC()-xhip)*dh/latlon2m);
+	double Ty=T().y(epi_lat+(y-infoData.NYSC()-yhip+dy)*dh/latlon2m);
+
+	double Tdx=T().sx(dx*dh/latlon2m);
+	double Tdy=T().sy(dy*dh/latlon2m);
+
+	double epi_x=T().x(epi_lon);
+	double epi_y=T().y(epi_lat);
+
+
+	double rotx=epi_x-Tx;
+	double roty=epi_y-Ty;
+
+	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
+
+	svg.add( Shape().Use("mapa.svg","mapa") );
+	svg.add( Shape().Mask(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()).fill(192, 192, 210) );
+
+	double colorBarX=21.0*image_width/24.0;
+	double colorBarY=1.0*image_height/8.0;
+	double colorBarWidth=1.0*image_width/40.0;
+	double colorBarHeight=3.0*image_height/4.0;
+
+
+	for(int k=0; k<isovel.size(); k++ ){
+		for(const vector<Coord>& vs: isovel[k] ){
+			for(int i=0; i<vs.size()-1; i+=2){
+				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*color[k].r, 0.7*color[k].g, 0.7*color[k].b).strokeWidth(1.0).strokeLinecap("round") );
+			}
+		}
+	}
+
+	svg.add(Shape().ColorBar(colorBarX, colorBarY,
+							 colorBarWidth, colorBarHeight,"ColorMap2",
+							 vmin, vmax, "Vx (m/s)") );
+
+
+	vector<float> polygon;
+	int Npol=3;
+	for(int i=0; i<Npol; i++){
+		double alpha=360*i/Npol;
+		double x = epi_lon;
+		double y = epi_lat+T().inv_sy( T().pointHeight );
+		rot(alpha,epi_lon, epi_lat, x, y);
+		polygon.push_back( T().x(x) );
+		polygon.push_back( T().y(y) );
+
+	}
+
+
+
+	svg.add( Shape().Polygon(polygon).fill(255,0,0).stroke(0,0,0).strokeWidth(0.1*T().textHeight) );
+
+	for(int i=0; i<infoData.HOLE_N(); i++){
+		double x=Tx+T().sx(infoData.HOLE_X(i)*dh/latlon2m);
+		double y=Ty+Tdy-T().sy(infoData.HOLE_Y(i)*dh/latlon2m);
+		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+				 .fill(0,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+		svg.add( Shape().Text(x,y-1.5*T().pointHeight,to_string(i+1))
+				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+	}
+
+//	vector<Coord> estaciones={
+//		Coord(-93.94, 14.94),
+//		Coord(-96.49, 15.67),
+//		Coord(-92.27, 14.92),
+//		Coord(-96.7, 17.07),
+//		Coord(-96.72, 17.07),
+//		Coord(-94.54, 17.99),
+//		Coord(-98.17, 19.04),
+//		Coord(-98.56, 17.8),
+//		Coord(-96.9, 19.53),
+//		Coord(-100.09, 17),
+//		Coord(-99.89, 16.87),
+//		Coord(-100.16, 18.9),
+//		Coord(-100.43, 17.21),
+//		Coord(-99.82, 16.91),
+//		Coord(-100.72, 20.04),
+//		Coord(-101.26, 17.54),
+//		Coord(-94.88, 17.09),
+//		Coord(-93.12, 16.78),
+//		Coord(-94.42, 18.03),
+//		Coord(-97.36, 18.42),
+//		Coord(-98.63, 19.07),
+//		Coord(-98.13, 16.39),
+//		Coord(-97.8, 17.83),
+//		Coord(-98.57, 17.56),
+//		Coord(-99.62, 17.92),
+//		Coord(-101.46, 17.61),
+//		Coord(-99.04, 20.3)
+//	};
+
+//	for(const Coord& est: estaciones ){
+//		double x=T().x(est.lon);
+//		double y=T().y(est.lat);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(255,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//	}
+	svg.add( Shape().Mesh(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()) );
+
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -739,6 +920,27 @@ int main(int argc, char *argv[])
 	cout<<"ly="<<infoData.ly()<<endl;
 
 #endif
+	cout<<"cdat.xhip="<<cdat.xhip<<endl;
+	cout<<"cdat.yhip="<<cdat.yhip<<endl;
+	if( cdat.xhip == std::numeric_limits<int>::max() ){
+		xhip = infoData.xHip();
+	}
+	else{
+		xhip = cdat.xhip;
+	}
+
+	if( cdat.yhip == std::numeric_limits<int>::max() ){
+		yhip = infoData.yHip();
+	}
+	else{
+		yhip = cdat.yhip;
+	}
+
+	cout<<"xhip="<<xhip<<endl;
+	cout<<"yhip="<<yhip<<endl;
+//	xhip = infoData.xHip();
+//	yhip = infoData.yHip();
+
 	//la transformación se debe revisar que parámetros recibe
 	transformation_settings_( infoData.DH(), infoData.NXSC()-infoData.NBGX(), infoData.NYSC()-infoData.NBGY(), infoData.SX()*infoData.NSKPX(), infoData.SY()*infoData.NSKPY());
 	make_map_();
@@ -830,15 +1032,16 @@ int main(int argc, char *argv[])
 
 	dstepIndex=infoData.NTISKP();
 
-	pushColor(153,102,255);//min
-	pushColor(0,0,255);
-	pushColor(0,255,0);
+//	pushColor(153,102,255);//min
+//	pushColor(0,0,255);
+//	pushColor(0,255,0);
 
-	pushColor(255,255,255);
+////	pushColor(255,255,255);
+//	pushColor(0,0,0);
 
-	pushColor(255,255,0);
-	pushColor(255,102,0);
-	pushColor(255,0,0);//max
+//	pushColor(255,255,0);
+//	pushColor(255,102,0);
+//	pushColor(255,0,0);//max
 
 	for(int id=0; id<NParticiones; id++){
 		for(int kk=particionesSZo[id]; kk<particionesSZf[id]; kk++){
@@ -991,7 +1194,7 @@ int main(int argc, char *argv[])
 					for (int y = 0; y < SY; y++) {
 						uint8_t r, g, b;
 						double f = (val[cdat.data[i].px[j]+SX*y+SX*SY*z]-ns.niceMin)/(ns.niceMax-ns.niceMin);
-						colorMap(f, r, g, b);
+						colorMap1.getColor(f, r, g, b);
 						lineX[y * 3 + 0] = static_cast<uint8_t>(r);
 						lineX[y * 3 + 1] = static_cast<uint8_t>(g);
 						lineX[y * 3 + 2] = static_cast<uint8_t>(b);
@@ -1011,7 +1214,7 @@ int main(int argc, char *argv[])
 					for (int x = 0; x < SX; x++) {
 						uint8_t r, g, b;
 						double f = (val[x+SX*cdat.data[i].py[j]+SX*SY*z]-ns.niceMin)/(ns.niceMax-ns.niceMin);
-						colorMap(f, r, g, b);
+						colorMap1.getColor(f, r, g, b);
 						lineY[x * 3 + 0] = static_cast<uint8_t>(r);
 						lineY[x * 3 + 1] = static_cast<uint8_t>(g);
 						lineY[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -1042,7 +1245,7 @@ int main(int argc, char *argv[])
 						float v=val[index_xyz];
 						double f = (v-ns.niceMin)/(ns.niceMax-ns.niceMin);
 						valmax[index_xy] = std::max( valmax[index_xy], fabs(v) );
-						colorMap(f, r, g, b);
+						colorMap1.getColor(f, r, g, b);
 						//cout<<x+SX*y+SX*SY*cdat.data[i].pz[j]<<" ";
 						//cout<<val[x+SX*y+SX*SY*cdat.data[i].pz[j]]-min<<" ";
 						//cout<<"["<<y<<"]["<<x<<"]:"<<cdat.data[i].pz[j]<<" ";
@@ -1195,7 +1398,7 @@ int main(int argc, char *argv[])
 		}
 		Color _color;
 		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
-		colorMap(f, _color.r, _color.g, _color.b);
+		colorMap2.getColor(f, _color.r, _color.g, _color.b);
 		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
 		color.push_back(_color);
 		isovel.push_back(coords);
@@ -1221,7 +1424,7 @@ int main(int argc, char *argv[])
 			uint8_t r, g, b;
 			int index_xy = x + SX * y;
 			double f = (valmax[index_xy]-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
-			colorMap(f, r, g, b);
+			colorMap2.getColor(f, r, g, b);
 			lineMaxZ[x * 3 + 0] = static_cast<uint8_t>(r);
 			lineMaxZ[x * 3 + 1] = static_cast<uint8_t>(g);
 			lineMaxZ[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -1229,7 +1432,7 @@ int main(int argc, char *argv[])
 		//cout<<endl;
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
-	make_svg_(-1,"./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
+	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
 
 
 	auto t1T = clk::now();

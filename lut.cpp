@@ -10,6 +10,16 @@ void lut::push(uint8_t r,uint8_t g,uint8_t b){
   vec.push_back(b);
 }
 
+void lut::push(Color color){
+  if(colorMapDefault){
+	vec.clear();
+	colorMapDefault=false;
+  }
+  vec.push_back(color.r);
+  vec.push_back(color.g);
+  vec.push_back(color.b);
+}
+
 lut::lut(){
   push(153,102,255);//min
   push(0,0,255);
@@ -18,6 +28,13 @@ lut::lut(){
   push(255,255,0);
   push(255,102,0);
   push(255,0,0);//max
+  colorMapDefault = true;
+}
+
+lut::lut(std::vector<Color> vColor){
+	for( auto &color : vColor){
+		push(color);
+	}
   colorMapDefault = true;
 }
 
@@ -32,4 +49,16 @@ void lut::getColor(float lambda, uint8_t &r, uint8_t &g, uint8_t &b){
     r = vec[3*indice] + delta*( vec[3*(indice+1)]-vec[3*indice] );
     g = vec[3*indice+1] + delta*( vec[3*(indice+1)+1]-vec[3*indice+1] );
     b = vec[3*indice+2] + delta*( vec[3*(indice+1)+2]-vec[3*indice+2] );
+}
+
+void lut::getColor(float lambda, Color &color){
+	if(lambda>1.0)lambda=1.0;
+	if(lambda<0.0)lambda=0.0;
+	int size=N();
+	float f=lambda*(size-1);
+	float indice=floor(f);
+	float delta=f-indice;
+	color.r = vec[3*indice] + delta*( vec[3*(indice+1)]-vec[3*indice] );
+	color.g = vec[3*indice+1] + delta*( vec[3*(indice+1)+1]-vec[3*indice+1] );
+	color.b = vec[3*indice+2] + delta*( vec[3*(indice+1)+2]-vec[3*indice+2] );
 }
