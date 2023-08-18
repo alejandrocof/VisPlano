@@ -126,14 +126,14 @@ public:
     return *this;
   }
   
-  Shape& ColorBar(const float& x, const float& y, const float& width, const float& height,const string& name, const float& min, const float& max, const string& title ){
+  Shape& ColorBar(const float& x, const float& y, const float& width, const float& height,const string& name, const float& min, const float& max, const string& title , const int & ticks=6){
     clear();
     head << "<rect x='" << x << "' y='" << y;
     head << "' width='"<< width <<"' height='"<<  height;
     head <<"' fill='url(#" << name << ")' />"<<endl;
 
-    NiceScale ns(min,max);
-    int N=ns.N();
+	NiceScale ns(min,max, ticks);
+	int N=ns.N();
     for(int iVal=0;iVal<N;iVal++){
       body << "<text x='" << x+width << "' y='" << (y + (1.0 - (float)iVal/(N-1))*height) <<"'";
       body << " fill='black' font-family='Times' font-size='"<<0.25*height<<"%'";

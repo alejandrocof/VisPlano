@@ -34,6 +34,7 @@ public:
 	}
 
 	friend Coord operator+(Coord const& c1, Coord const& c2);
+	friend Coord operator-(Coord const& c1, Coord const& c2);
 	friend Coord operator*(double const& k, Coord const& c);
 	friend Coord operator*(Coord const& c, double const& k);
 
