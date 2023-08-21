@@ -1249,7 +1249,7 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
 				 .fill(0,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
 		stringstream coordEst;
-		coordEst<<"("<<infoData.HOLE_X(i)<<", "<<infoData.HOLE_Y(i)<<")";
+		coordEst<<i<<" ("<<infoData.HOLE_X(i)<<", "<<infoData.HOLE_Y(i)<<")";
 		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
 				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
 //		svg.add( Shape().Text(x,y-1.5*T().pointHeight,to_string(i+1))
@@ -1287,6 +1287,20 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 
 
 	svg.add( Shape().Mesh(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()) );
+
+	{
+		double x1=Tx+T().sx(dh/latlon2m);
+		double y1=Ty+Tdy-T().sy(dh/latlon2m);
+		double x2=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+		double y2=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 0, 0).strokeWidth(5.0).strokeLinecap("round") );
+		x1=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+		y1=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+		x2=Tx+T().sx((infoData.NXSC()+xhip)*dh/latlon2m);
+		y2=Ty+Tdy-T().sy((infoData.NYSC()+yhip)*dh/latlon2m);
+		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 0, 0).strokeWidth(5.0).strokeLinecap("round") );
+	}
+
 
 }
 
