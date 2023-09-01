@@ -17,6 +17,7 @@ ostream& operator << (ostream &o,const Shape& tex){
     case ShapeName::Mesh:
     case ShapeName::Use:
     case ShapeName::Mask:
+	case ShapeName::MaskRaw:
     case ShapeName::ShapeFile:
       o<<tex.head.str()<<tex.body.str()<<tex.tail.str();
     break;

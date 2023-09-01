@@ -2,6 +2,7 @@
 #include<string>
 #include<sstream>
 
+
 #include"inputdata.hpp"
 #include<iomanip>
 
@@ -11,6 +12,9 @@
 
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <tuple>
+#include <iterator>
 
 #include "TinyPngOut.hpp"
 #include "configdata.hpp"
@@ -23,6 +27,7 @@
 #include "ImgTransform.hpp"
 #include "sigfigs.hpp"
 #include "Coord.hpp"
+#include "ReadCompleteInversion.hpp"
 
 //for i in Vx3D*.svg;do svg="${i}";png="${i}.png";echo "$png";rsvg-convert -w 3000 -h 2000 $svg -o $png; done
 //
@@ -109,10 +114,24 @@ lut colorMap2(
 lut colorMap3(
 		vector<Color>{
 			Color(255,255,255),
-			Color(0,255,255),
-			Color(0,255,0),
-			Color(255,213,0),
-			Color(255,0,0),
+			Color(255,255,255),
+			Color(254,255,255),
+			Color(198,255,255),
+			Color(144,255,255),
+			Color(76,255,255),
+			Color(9,255,253),
+			Color(3,255,170),
+			Color(0,255,88),
+			Color(43,255,43),
+			Color(88,255,2),
+			Color(170,253,0),
+			Color(250,252,0),
+			Color(255,226,0),
+			Color(255,201,0),
+			Color(255,161,0),
+			Color(255,121,0),
+			Color(255,65,0),
+			Color(255,8,0),
 		}
 		);
 
@@ -144,6 +163,30 @@ vector<Coord> estaciones={
 	Coord(-99.62, 17.92),
 	Coord(-101.46, 17.61),
 	Coord(-99.04, 20.3)
+};
+
+struct mmi_val{
+	Color c;
+	string label;
+	double min, max, val;
+
+	mmi_val(Color c, string label, double min, double max, double val):
+		c(c), label(label), min(min),	max(max), val(val){};
+};
+
+vector< mmi_val > MMI_Scale={
+	mmi_val( Color(255,255,255),"I. Not felt",-std::numeric_limits<double>::max(),1.5,1.0),
+	mmi_val( Color(190,204,252),"II. Weak", 1.5, 2.5, 2.0),
+	mmi_val( Color(155,154,250),"III. Weak", 2.5, 3.5, 3.0),
+	mmi_val( Color(115,255,254),"IV. Light", 3.5, 4.5, 4.0),
+	mmi_val( Color( 99,248,155),"V. Moderate", 4.5, 5.5, 5.0),
+	mmi_val( Color(254,254, 69),"VI. Strong", 5.5, 6.5, 6.0),
+	mmi_val( Color(255,220, 60),"VII. Very strong", 6.5, 7.5, 7.0),
+	mmi_val( Color(255,144, 42),"VIII. Severe", 7.5, 8.5, 8.0),
+	mmi_val( Color(255,  0, 22),"IX. Violent", 8.5, 9.5, 9.0),
+	mmi_val( Color(230,  0, 18),"X. Extreme", 9.5, 10.5, 10.0),
+	mmi_val( Color(142,  0,  7),"XI. Extreme", 10.5, 11.5, 11.0),
+	mmi_val( Color( 71,  0,  2),"XII. Extreme", 11.5, std::numeric_limits<double>::max(), 12.0),
 };
 
 vector< vector< pair<Coord,float> > > coordInvSlip={
@@ -357,6 +400,21 @@ vector< vector< pair<Coord,float> > > coordInvSlip={
 	}
 };
 
+double f2g1mmi(double D, double Dp, double Ms){
+	double B0= 1.1090;
+	double B1=-0.1399;
+	double B2=-0.0011;
+	double B3=0.5209;
+	return exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000.0 ) + B3*log(Ms) );
+}
+
+double df2g1mmi(double D, double Dp, double Ms){
+	double B0= 1.1090;
+	double B1=-0.1399;
+	double B2=-0.0011;
+	double B3=0.5209;
+	return exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000.0 ) + B3*log(Ms) )*(B1/D+B2/1000.0);
+}
 
 inputData infoData;
 ImgT img;
@@ -417,6 +475,101 @@ int calculaCifras(int num){
 //	b = lutColor[3*indice+2] + delta*( lutColor[3*(indice+1)+2]-lutColor[3*indice+2] );
 //	//cout<< lambda <<" "<<r<<" "<<g<<" "<<b<<endl;
 //}
+
+Coord interpola(double alpha, double beta, Coord a, Coord b, Coord c, Coord d){
+	Coord ab=a+alpha*(b-a);
+	Coord dc=d+alpha*(c-d);
+	return ab+beta*(dc-ab);
+}
+void slip(SVG2D &svg,bool addColor=true, string filename="complete_inversion.fsp"){
+	ifstream inFile;
+	inFile.open(filename, std::ifstream::in);
+	if (inFile.is_open()){
+		ReadCompleteInversion Ext(inFile);
+		int Nx,Nz;
+		if( Ext.get("Nx",Nx) && Ext.get("Nz",Nz) ){
+			cout<<"Nx:"<<Nx<<" Nz:"<<Nz<<endl;
+			float LAT,LON,X,Y,Z,SLIP,RAKE,TRUP,RISE,SF_MOMENT;
+			float max=-std::numeric_limits<float>::max();
+			float min=std::numeric_limits<float>::max();
+			vector<float> u(Nx*Nz);
+			int i=0,j=0;
+			int k=0;
+			vector< vector< pair<Coord,float> > > coordInvSlip(Nz);
+			for( int j=0; j<Nz; j++){
+				vector< pair<Coord,float> > row(Nx);
+				for( int i=0; i<Nx; i++){
+					string line;
+					getline(inFile,line);
+					stringstream ssline(line);
+					if(! (ssline>>LAT>>LON>>X>>Y>>Z>>SLIP>>RAKE>>TRUP>>RISE>>SF_MOMENT) ){
+						cout<<"Se esperaba un parámetro más en la lectura"<<endl;
+					}
+					row[i]=pair<Coord, float>( Coord( LON, LAT ), SLIP );
+				}
+				coordInvSlip[j]=row;
+			}
+//			for(const auto& row: coordInvSlip){
+//				for(const auto& col: row){
+//					cout<<"Coord:"<<col.first.lon<<", "<<col.first.lat<<" ,"<<col.second<<endl;
+//				}
+//			}
+			float strokeWidth=0.005*T().textHeight;
+			int J1, J2, J3, J4;
+			int I1, I2, I3, I4;
+			double beta1, beta2, beta3, beta4;
+			double alpha1, alpha2, alpha3, alpha4;
+			for(int j=0; j<coordInvSlip.size(); j++ ){
+				J1=J2=J3=J4=j;
+				beta1=beta2=beta3=beta4=0.5;
+				if(j==0){
+					J1=J2=j+1;
+					beta1=beta2=-0.5;
+				}
+				if(j==coordInvSlip.size()-1){
+					J3=J4=j-1;
+					beta3=beta4=1.5;
+				}
+				for(int i=0; i<coordInvSlip[j].size(); i++ ){
+					vector<float> p;
+					I1=I2=I3=I4=i;
+					alpha1=alpha2=alpha3=alpha4=0.5;
+					if(i==0){
+						I1=I4=i+1;
+						alpha1=alpha4=-0.5;
+					}
+					if(i==coordInvSlip[j].size()-1){
+						I2=I3=i-1;
+						alpha2=alpha3=1.5;
+					}
+
+					Coord p1=interpola(alpha1,beta1,coordInvSlip[J1-1][I1-1].first,coordInvSlip[J1-1][I1].first,coordInvSlip[J1][I1].first,coordInvSlip[J1][I1-1].first);
+					Coord p2=interpola(alpha2,beta2,coordInvSlip[J2-1][I2].first,coordInvSlip[J2-1][I2+1].first,coordInvSlip[J2][I2+1].first,coordInvSlip[J2][I2].first);
+					Coord p3=interpola(alpha3,beta3,coordInvSlip[J3][I3].first,coordInvSlip[J3][I3+1].first,coordInvSlip[J3+1][I3+1].first,coordInvSlip[J3+1][I3].first);
+					Coord p4=interpola(alpha4,beta4,coordInvSlip[J4][I4-1].first,coordInvSlip[J4][I4].first,coordInvSlip[J4+1][I4].first,coordInvSlip[J4+1][I4-1].first);
+					p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
+					p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
+					p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
+					p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
+					uint8_t r, g, b;
+					double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
+					colorMap3.getColor(f, r, g, b);
+					if( addColor ){
+						svg.add( Shape().Polygon(p)
+						.fill( (int)r, (int)g, (int)b ).fillOpacity(0.5)
+						.stroke(0,0,0).strokeWidth(strokeWidth) );
+					}else{
+						svg.add( Shape().Polygon(p)
+						.fillNone()
+						.stroke(0,0,0).strokeWidth(strokeWidth) );
+					}
+				}
+			}
+		}
+	}else{
+		cout<<"No se encontro el archivo: complete_inversion.fsp"<<endl;
+	}
+}
 
 template <typename T>
 void getdata(ifstream &file, T &x){
@@ -562,7 +715,8 @@ void transformation_settings_( double DH, int NXSC, int NYSC, int LX, int LY){
 
 void make_map_(){
 	SVG2D svgmap("./imagenes/mapa.svg",T().width,T().height,"mapa");
-	svgmap.add( Shape().ShapeFile(nameFileCSV,colLabelFileCSV,0.7) );
+	svgmap.add( Shape().ShapeFile(nameFileCSV,colLabelFileCSV,0.4) );//pone nombre de estados
+	//svgmap.add( Shape().ShapeFile(nameFileCSV) );//no pone nombre de estados
 #if defined DEBUG
 	cout<<"*****make_map*****"<<endl;
 	cout<<"Se agrego Mapa"<<endl;
@@ -616,6 +770,8 @@ void holes_(int *nbhx, int *nbhy, int *nholes){
 
 }
 */
+
+
 
 //void make_svg_(int *ntst, double *dt, int *nbgxs, int *nedxs, int *nbgys, int *nedys, int *nbgzs, int *nedzs, int *size,int *layerGlobal){
 void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vmax){
@@ -692,6 +848,9 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 	//svg.add(Shape().Image(Tx,Ty,Tdx,Tdy,namePNG,0,0,0));
 	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
+
+
+	slip(svg);
 	//svg.add(Shape().Image(Tx,Ty,Tdx,Tdy,namePNG,epi_x,epi_y,-22));
 
 	//svg.add(Shape().Image(Tx+(Tx-epi_x),Ty+(Ty-Tdy+epi_y),Tdx,Tdy,namePNG,(Tx-epi_x),(Ty-Tdy+epi_y),45));
@@ -985,11 +1144,7 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 }
 
-Coord interpola(double alpha, double beta, Coord a, Coord b, Coord c, Coord d){
-	Coord ab=a+alpha*(b-a);
-	Coord dc=d+alpha*(c-d);
-	return ab+beta*(dc-ab);
-}
+
 
 
 void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
@@ -1022,187 +1177,9 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
 
 
-	{
-		int j=0;
-		for(int i=1; i<coordInvSlip[j].size()-1; i++ ){
-			vector<float> p;
-			Coord p1=interpola(0.5,-0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			Coord p2=interpola(0.5,-0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p3=interpola(0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p4=interpola(0.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-		j=coordInvSlip.size()-1;
-		for(int i=1; i<coordInvSlip[j].size()-1; i++ ){
-			vector<float> p;
-			Coord p1=interpola(0.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p2=interpola(0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p3=interpola(0.5,1.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p4=interpola(0.5,1.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-	}
-
-	{
-		int i=0;
-		for(int j=1; j<coordInvSlip.size()-1; j++ ){
-			vector<float> p;
-			Coord p1=interpola(-0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p2=interpola(0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p3=interpola(0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p4=interpola(-0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-		i=coordInvSlip[0].size()-1;
-		for(int j=1; j<coordInvSlip.size()-1; j++ ){
-			vector<float> p;
-			Coord p1=interpola(0.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p2=interpola(1.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p3=interpola(1.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			Coord p4=interpola(0.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-	}
-
-	{
-
-		{
-			int i=0;
-			int j=0;//
-			vector<float> p;
-			Coord p1=interpola(-0.5,-0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p2=interpola(0.5,-0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p3=interpola(0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p4=interpola(-0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-
-		{
-			int i=coordInvSlip[0].size()-1;
-			int j=0;//
-			vector<float> p;
-			Coord p1=interpola(0.5,-0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			Coord p2=interpola(1.5,-0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			Coord p3=interpola(1.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			Coord p4=interpola(0.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
+	slip(svg);
 
 
-		{
-			int i=0;
-			int j=coordInvSlip.size()-1;
-			vector<float> p;
-			Coord p1=interpola(-0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p2=interpola(0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p3=interpola(0.5,1.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p4=interpola(-0.5,1.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-
-		{
-			int i=coordInvSlip[0].size()-1;
-			int j=coordInvSlip.size()-1;
-			vector<float> p;
-			Coord p1=interpola(0.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p2=interpola(1.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p3=interpola(1.5,1.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p4=interpola(0.5,1.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-	}
-
-	for(int j=1; j<coordInvSlip.size()-1; j++ ){
-		for(int i=1; i<coordInvSlip[j].size()-1; i++ ){
-			vector<float> p;
-			Coord p1=interpola(0.5,0.5,coordInvSlip[j-1][i-1].first,coordInvSlip[j-1][i].first,coordInvSlip[j][i].first,coordInvSlip[j][i-1].first);
-			Coord p2=interpola(0.5,0.5,coordInvSlip[j-1][i].first,coordInvSlip[j-1][i+1].first,coordInvSlip[j][i+1].first,coordInvSlip[j][i].first);
-			Coord p3=interpola(0.5,0.5,coordInvSlip[j][i].first,coordInvSlip[j][i+1].first,coordInvSlip[j+1][i+1].first,coordInvSlip[j+1][i].first);
-			Coord p4=interpola(0.5,0.5,coordInvSlip[j][i-1].first,coordInvSlip[j][i].first,coordInvSlip[j+1][i].first,coordInvSlip[j+1][i-1].first);
-			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-			colorMap3.getColor(f, r, g, b);
-
-			svg.add( Shape().Polygon(p)
-					 .fill( (int)r, (int)g, (int)b ).stroke(0,0,0).strokeWidth(0.005*T().textHeight) );
-		}
-	}
 
 
 	svg.add( Shape().Use("mapa.svg","mapa") );
@@ -1299,12 +1276,349 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 		x2=Tx+T().sx((infoData.NXSC()+xhip)*dh/latlon2m);
 		y2=Ty+Tdy-T().sy((infoData.NYSC()+yhip)*dh/latlon2m);
 		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 0, 0).strokeWidth(5.0).strokeLinecap("round") );
+		x1=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+		y1=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+		x2=Tx+T().sx((infoData.NXSC()+216)*dh/latlon2m);
+		y2=Ty+Tdy-T().sy((infoData.NYSC()+40)*dh/latlon2m);
+		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 255, 0).strokeWidth(5.0).strokeLinecap("round") );
 	}
 
 
 }
 
 
+void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio){
+
+	int image_width=T().width;
+	int image_height=T().height;
+
+	SVG2D svg(nameSVG,image_width,image_height);
+	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
+	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
+
+	double x=infoData.NBGX()-1;
+	double y=infoData.NBGY()-1;
+	double dx=infoData.NEDX()-infoData.NBGX()+1;
+	double dy=infoData.NEDY()-infoData.NBGY()+1;
+
+	double lon1=epi_lon+(x-infoData.NXSC()-xhip)*dh/latlon2m;
+	double lat1=epi_lat+(y-infoData.NYSC()-yhip+dy)*dh/latlon2m;
+	double lon2=lon1+dx*dh/latlon2m;
+	double lat2=lat1-dy*dh/latlon2m;
+
+	double Tx=T().x(lon1);
+	double Ty=T().y(lat1);
+
+	double Tdx=T().sx(dx*dh/latlon2m);
+	double Tdy=T().sy(dy*dh/latlon2m);
+
+	double epi_x=T().x(epi_lon);
+	double epi_y=T().y(epi_lat);
+
+
+	double rotx=epi_x-Tx;
+	double roty=epi_y-Ty;
+
+	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
+
+
+	for(int i=1; i<vRadio.size() && vRadio[i]>0; i++ ){
+		double lon = epi_lon;
+		double lat = epi_lat;
+		double x=T().x(lon);
+		double y=T().y(lat);
+		double r=T().sx(vRadio[i]/latlon2m);
+		double dlabel=T().sx(0.5*(vRadio[i]+vRadio[i-1])/latlon2m);
+		double alpha=225.0*M_PI/180.0;
+		string label;
+		if(i==0)label.assign("I");
+		if(i==1)label.assign("II");
+		if(i==2)label.assign("III");
+		if(i==3)label.assign("IV");
+		if(i==4)label.assign("V");
+		if(i==5)label.assign("VI");
+		if(i==6)label.assign("VII");
+		if(i==7)label.assign("VIII");
+		if(i==8)label.assign("IX");
+		if(i==9)label.assign("IX");
+		if(i==10)label.assign("X");
+		if(i==11)label.assign("XI");
+		if(i==12)label.assign("XII");
+		cout<<"i:"<<i<<" r:"<<vRadio[i]<<endl;
+
+		svg.add(Shape().Circle(x,y,r)
+				.fillNone().stroke(255,0,0).strokeWidth(0.1*T().textHeight) );
+		svg.add( Shape().Text( x+dlabel*cos(alpha), y-dlabel*sin(alpha), label )
+				 .align("middle").fontSize(0.4*T().textHeight).fontFamily("Times") );
+	}
+	svg.add( Shape().MaskRaw(lon1,lon2,lat2,lat1).fill(192, 192, 210) );
+	cout<<"xmin:"<<BB().xmin()<<" xmax:"<<BB().xmax()<<" lon1:"<<lon1<<" lon2:"<<lon2<<endl;
+	cout<<"ymin:"<<BB().ymin()<<" ymax:"<<BB().ymax()<<" lat1:"<<lat1<<" lat2:"<<lat2<<endl;
+	svg.add( Shape().Use("mapa.svg","mapa") );
+	svg.add( Shape().Mask(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()).fill(192, 192, 210) );
+
+	double colorBarX=22.0*image_width/24.0;
+	double colorBarY=1.0*image_height/8.0;
+	double colorBarWidth=5.0*image_width/40.0;
+	double colorBarHeight=3.0*image_height/4.0;
+
+	int N=MMI_Scale.size();
+	int i=0;
+	double h=colorBarHeight/(N+1);
+	for(const auto& mmi: MMI_Scale ){
+		double x=colorBarX;
+		double y=colorBarY+colorBarHeight*i/(N-1);
+
+		svg.add(Shape().Circle(x,y,2*T().pointHeight)
+				.fill(mmi.c.r,mmi.c.g,mmi.c.b).stroke(0,0,0).strokeWidth(0.1*T().textHeight) );
+		svg.add(Shape().Rectangle(x-0.5*colorBarWidth, y-0.5*h,colorBarWidth,h).fill(mmi.c.r,mmi.c.g,mmi.c.b) );
+		svg.add( Shape().Text(x,y+T().pointHeight,mmi.label )
+				 .align("middle").fontSize(0.7*T().textHeight).fontFamily("Times").stroke(255,255,255).strokeWidth(0.2*T().textHeight).opacity(0.3) );
+		svg.add( Shape().Text(x,y+T().pointHeight,mmi.label )
+				 .align("middle").fontSize(0.7*T().textHeight).fontFamily("Times") );
+		i++;
+	}
+
+	vector<float> polygon;
+	int Npol=3;
+	for(int i=0; i<Npol; i++){
+		double alpha=360*i/Npol;
+		double x = epi_lon;
+		double y = epi_lat+T().inv_sy( T().pointHeight );
+		rot(alpha,epi_lon, epi_lat, x, y);
+		polygon.push_back( T().x(x) );
+		polygon.push_back( T().y(y) );
+
+	}
+	svg.add( Shape().Polygon(polygon).fill(255,0,0).stroke(0,0,0).strokeWidth(0.1*T().textHeight) );
+
+
+
+//	for(int i=0; i<infoData.HOLE_N(); i++){
+//		double x=Tx+T().sx(infoData.HOLE_X(i)*dh/latlon2m);
+//		double y=Ty+Tdy-T().sy(infoData.HOLE_Y(i)*dh/latlon2m);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(0,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//		stringstream coordEst;
+//		coordEst<<i<<" ("<<infoData.HOLE_X(i)<<", "<<infoData.HOLE_Y(i)<<")";
+//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
+//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+////		svg.add( Shape().Text(x,y-1.5*T().pointHeight,to_string(i+1))
+////				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+//	}
+
+
+//	vector< pair<int,int> > vp={
+//		pair<int,int>(1,1),
+//		pair<int,int>(infoData.NX(),1),
+//		pair<int,int>(infoData.NX(),infoData.NY()),
+//		pair<int,int>(1,infoData.NY())
+//	};
+//	for(const auto& p: vp ){
+//		double x=Tx+T().sx(p.first*dh/latlon2m);
+//		double y=Ty+Tdy-T().sy(p.second*dh/latlon2m);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(64,64,64).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//		stringstream coordEst;
+//		coordEst<<"("<<p.first<<", "<<p.second<<")";
+//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
+//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+//	}
+
+//	for(const Coord& est: estaciones ){
+//		double x=T().x(est.lon);
+//		double y=T().y(est.lat);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(255,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//	}
+	svg.add( Shape().Mesh(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()) );
+
+}
+
+
+
+void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vmax,  vector<double> &vRadio){
+
+	int image_width=T().width;
+	int image_height=T().height;
+
+	SVG2D svg(nameSVG,image_width,image_height);
+	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
+	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
+
+	double x=infoData.NBGX()-1;
+	double y=infoData.NBGY()-1;
+	double dx=infoData.NEDX()-infoData.NBGX()+1;
+	double dy=infoData.NEDY()-infoData.NBGY()+1;
+
+	double lon1=epi_lon+(x-infoData.NXSC()-xhip)*dh/latlon2m;
+	double lat1=epi_lat+(y-infoData.NYSC()-yhip+dy)*dh/latlon2m;
+	double lon2=lon1+dx*dh/latlon2m;
+	double lat2=lat1-dy*dh/latlon2m;
+
+	double Tx=T().x(lon1);
+	double Ty=T().y(lat1);
+
+	double Tdx=T().sx(dx*dh/latlon2m);
+	double Tdy=T().sy(dy*dh/latlon2m);
+
+	double epi_x=T().x(epi_lon);
+	double epi_y=T().y(epi_lat);
+
+
+	double rotx=epi_x-Tx;
+	double roty=epi_y-Ty;
+
+
+
+
+
+	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
+	slip(svg);
+
+
+
+
+
+
+
+	//svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
+
+
+	for(int i=1; i<vRadio.size() && vRadio[i]>0; i++ ){
+		double lon = epi_lon;
+		double lat = epi_lat;
+		double x=T().x(lon);
+		double y=T().y(lat);
+		double r=T().sx(vRadio[i]/latlon2m);
+		double dlabel=T().sx(0.5*(vRadio[i]+vRadio[i-1])/latlon2m);
+		double alpha=225.0*M_PI/180.0;
+		string label;
+		if(i==0)label.assign("I");
+		if(i==1)label.assign("II");
+		if(i==2)label.assign("III");
+		if(i==3)label.assign("IV");
+		if(i==4)label.assign("V");
+		if(i==5)label.assign("VI");
+		if(i==6)label.assign("VII");
+		if(i==7)label.assign("VIII");
+		if(i==8)label.assign("IX");
+		if(i==9)label.assign("IX");
+		if(i==10)label.assign("X");
+		if(i==11)label.assign("XI");
+		if(i==12)label.assign("XII");
+		cout<<"i:"<<i<<" r:"<<vRadio[i]<<endl;
+
+		svg.add(Shape().Circle(x,y,r)
+				.fillNone().stroke(255,0,0).strokeWidth(0.1*T().textHeight) );
+		svg.add( Shape().Text( x+dlabel*cos(alpha), y-dlabel*sin(alpha), label )
+				 .align("middle").fontSize(0.4*T().textHeight).fontFamily("Times") );
+	}
+	svg.add( Shape().MaskRaw(lon1,lon2,lat2,lat1).fill(192, 192, 210) );
+	cout<<"xmin:"<<BB().xmin()<<" xmax:"<<BB().xmax()<<" lon1:"<<lon1<<" lon2:"<<lon2<<endl;
+	cout<<"ymin:"<<BB().ymin()<<" ymax:"<<BB().ymax()<<" lat1:"<<lat1<<" lat2:"<<lat2<<endl;
+
+
+	svg.add( Shape().Use("mapa.svg","mapa") );
+	svg.add( Shape().Mask(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()).fill(192, 192, 210) );
+
+	double colorBarX=21.0*image_width/24.0;
+	double colorBarY=1.0*image_height/8.0;
+	double colorBarWidth=1.0*image_width/40.0;
+	double colorBarHeight=3.0*image_height/4.0;
+
+
+	for(int k=0; k<isovel.size(); k++ ){
+		for(const vector<Coord>& vs: isovel[k] ){
+			for(int i=0; i<vs.size()-1; i+=2){
+				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*color[k].r, 0.7*color[k].g, 0.7*color[k].b).strokeWidth(1.0).strokeLinecap("round") );
+			}
+		}
+	}
+
+	svg.add(Shape().ColorBar(colorBarX, colorBarY,
+							 colorBarWidth, colorBarHeight,"ColorMap2",
+							 vmin, vmax, "Vx (m/s)") );
+
+
+	vector<float> polygon;
+	int Npol=3;
+	for(int i=0; i<Npol; i++){
+		double alpha=360*i/Npol;
+		double x = epi_lon;
+		double y = epi_lat+T().inv_sy( T().pointHeight );
+		rot(alpha,epi_lon, epi_lat, x, y);
+		polygon.push_back( T().x(x) );
+		polygon.push_back( T().y(y) );
+
+	}
+	svg.add( Shape().Polygon(polygon).fill(255,0,0).stroke(0,0,0).strokeWidth(0.1*T().textHeight) );
+
+//	for(int i=0; i<infoData.HOLE_N(); i++){
+//		double x=Tx+T().sx(infoData.HOLE_X(i)*dh/latlon2m);
+//		double y=Ty+Tdy-T().sy(infoData.HOLE_Y(i)*dh/latlon2m);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(0,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//		stringstream coordEst;
+//		coordEst<<i<<" ("<<infoData.HOLE_X(i)<<", "<<infoData.HOLE_Y(i)<<")";
+//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
+//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+////		svg.add( Shape().Text(x,y-1.5*T().pointHeight,to_string(i+1))
+////				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+//	}
+
+
+//	vector< pair<int,int> > vp={
+//		pair<int,int>(1,1),
+//		pair<int,int>(infoData.NX(),1),
+//		pair<int,int>(infoData.NX(),infoData.NY()),
+//		pair<int,int>(1,infoData.NY())
+//	};
+//	for(const auto& p: vp ){
+//		double x=Tx+T().sx(p.first*dh/latlon2m);
+//		double y=Ty+Tdy-T().sy(p.second*dh/latlon2m);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(64,64,64).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//		stringstream coordEst;
+//		coordEst<<"("<<p.first<<", "<<p.second<<")";
+//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
+//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
+//	}
+
+
+
+
+//	for(const Coord& est: estaciones ){
+//		double x=T().x(est.lon);
+//		double y=T().y(est.lat);
+//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
+//				 .fill(255,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
+//	}
+
+
+
+	svg.add( Shape().Mesh(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()) );
+
+//	{
+//		double x1=Tx+T().sx(dh/latlon2m);
+//		double y1=Ty+Tdy-T().sy(dh/latlon2m);
+//		double x2=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+//		double y2=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+//		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 0, 0).strokeWidth(5.0).strokeLinecap("round") );
+//		x1=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+//		y1=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+//		x2=Tx+T().sx((infoData.NXSC()+xhip)*dh/latlon2m);
+//		y2=Ty+Tdy-T().sy((infoData.NYSC()+yhip)*dh/latlon2m);
+//		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 0, 0).strokeWidth(5.0).strokeLinecap("round") );
+//		x1=Tx+T().sx(infoData.NXSC()*dh/latlon2m);
+//		y1=Ty+Tdy-T().sy(infoData.NYSC()*dh/latlon2m);
+//		x2=Tx+T().sx((infoData.NXSC()+216)*dh/latlon2m);
+//		y2=Ty+Tdy-T().sy((infoData.NYSC()+40)*dh/latlon2m);
+//		svg.add( Shape().Line( x1, y1, x2, y2 ).stroke( 255, 255, 0).strokeWidth(5.0).strokeLinecap("round") );
+//	}
+
+
+}
 
 void make_svg_slip(string nameSVG, string namePNG, double vmin, double vmax, int ticks=6){
 
@@ -1450,7 +1764,9 @@ int main(int argc, char *argv[])
 	auto t0T = clk::now();
 
 	vector<float> val;
+	vector<int> valID;
 	val.resize( SX*SY*SZ );
+	valID.resize( SX*SY*SZ );
 
 	vector<float> valmax( SX*SY, -std::numeric_limits<float>::max() );
 
@@ -1465,6 +1781,15 @@ int main(int argc, char *argv[])
 	vector<int> particionesSZo(NParticiones),particionesSZf(NParticiones);
 	vector<int> particionesSizeArray(NParticiones);
 	vector<int> particionesID(NParticiones);
+
+	struct ijk{
+		int i, j, k;
+		ijk(int i, int j, int k):i(i),j(j),k(k){}
+	};
+
+	map<int, ijk> id2ijk;
+
+
 
 	int id=0;
 	int SXo=0;
@@ -1487,6 +1812,10 @@ int main(int argc, char *argv[])
 				particionesSYo[id]=SYo;particionesSYf[id]=SYf;
 				particionesSZo[id]=SZo;particionesSZf[id]=SZf;
 				particionesSizeArray[id]=SXi*SYj*SZk+2*SZk;
+				//ijk ccc=ijk(i,j,k);
+				id2ijk.emplace(id,ijk(i,j,k));
+				//cout<<id2ijk.at(id).i<<endl;
+				//id2ijk[id]=ccc;
 				//particionesSizeArray[id]=SXi*SYj*SZk;
 				//if(SZk!=1)
 				//	particionesSizeArray[id]+=2*SZk;
@@ -1722,6 +2051,7 @@ int main(int argc, char *argv[])
 						int Ly=jj*SX;
 						for(int ii=particionesSXo[id]; ii<particionesSXf[id]; ii++){
 							val[ii+Ly+Pz]=*it;
+							valID[ii+Ly+Pz]=id;
 
 							//if(particionesID[id]==55)val[ii+Ly+Pz]=1.0;
 							it++;
@@ -1797,6 +2127,56 @@ int main(int argc, char *argv[])
 						//cout<<x+SX*y+SX*SY*cdat.data[i].pz[j]<<" ";
 						//cout<<val[x+SX*y+SX*SY*cdat.data[i].pz[j]]-min<<" ";
 						//cout<<"["<<y<<"]["<<x<<"]:"<<cdat.data[i].pz[j]<<" ";
+//						lineZ[x * 3 + 0] = static_cast<uint8_t>(r);
+//						lineZ[x * 3 + 1] = static_cast<uint8_t>(g);
+//						lineZ[x * 3 + 2] = static_cast<uint8_t>(b);
+
+//						cout<<index_xy<<" -> "<<particionesID[ valID[index_xy] ]<<endl;
+//						if( particionesID[ valID[index_xy] ]==43 )
+//						{
+//							r=r;
+//							g=3*g/4;
+//							b=3*b/4;
+//						}
+//						if( particionesID[ valID[index_xy] ]==47 )
+//						{
+//							r=r;
+//							g=g;
+//							b=3*b/4;
+//						}
+//						if( particionesID[ valID[index_xy] ]==51 )
+//						{
+//							r=3*r/4;
+//							g=g;
+//							b=3*b/4;
+//						}
+//						if( particionesID[ valID[index_xy] ]==55 )
+//						{
+//							r=3*r/4;
+//							g=g;
+//							b=b;
+//						}
+//						if( particionesID[ valID[index_xy] ]==59 )
+//						{
+//							r=3*r/4;
+//							g=3*g/4;
+//							b=b;
+//						}
+						if( id2ijk.at(valID[index_xy]).i % 2 != id2ijk.at(valID[index_xy]).j % 2 ){
+							r=3*r/4;
+							g=3*g/4;
+							b=3*b/4;
+						}
+						if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
+							r=r/2;
+							g=g/2;
+							b=b/2;
+						}
+						if( x==infoData.NXSC() && y==infoData.NYSC() ){
+							r=0;
+							g=0;
+							b=0;
+						}
 						lineZ[x * 3 + 0] = static_cast<uint8_t>(r);
 						lineZ[x * 3 + 1] = static_cast<uint8_t>(g);
 						lineZ[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -1817,6 +2197,7 @@ int main(int argc, char *argv[])
 
 	}//fin for tiempo
 
+
 	float velMaxZ = -std::numeric_limits<float>::max();
 	float velMinZ =  std::numeric_limits<float>::max();
 	for (int i = 0; i < valmax.size(); i++){
@@ -1824,6 +2205,11 @@ int main(int argc, char *argv[])
 		if( velMaxZ < v ) velMaxZ = v;
 		if( velMinZ > v ) velMinZ = v;
 	}
+
+
+	ofstream output_file("./velMax.dat");
+	ostream_iterator<float> output_iterator(output_file, "\n");
+	copy(valmax.begin(), valmax.end(), output_iterator);
 	//	velMaxZ=0.002;
 	NiceScale nsMax(0,velMaxZ);
 
@@ -1973,6 +2359,22 @@ int main(int argc, char *argv[])
 			int index_xy = x + SX * y;
 			double f = (valmax[index_xy]-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
 			colorMap2.getColor(f, r, g, b);
+
+//			if( id2ijk.at(valID[index_xy]).i % 2 == id2ijk.at(valID[index_xy]).j % 2 ){
+//				r=3*r/4;
+//				g=3*g/4;
+//				b=3*b/4;
+//			}
+//			if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
+//				r=r/2;
+//				g=g/2;
+//				b=b/2;
+//			}
+//			if( x==infoData.NXSC() && y==infoData.NYSC() ){
+//				r=0;
+//				g=0;
+//				b=0;
+//			}
 			lineMaxZ[x * 3 + 0] = static_cast<uint8_t>(r);
 			lineMaxZ[x * 3 + 1] = static_cast<uint8_t>(g);
 			lineMaxZ[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -1981,6 +2383,141 @@ int main(int argc, char *argv[])
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
 	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
+
+
+//	double B0= 1.1090;
+//	double B1=-0.1399;
+//	double B2=-0.0011;
+//	double B3=0.5209;
+//	double Ms=8.1;
+//	double Dp=44000.0;
+//	double B0= 1.5188;
+//	double B1=-0.0672;
+//	double B2=-0.0021;
+//	double B3= 0.3314;
+//	double Ms=7.0;
+//	double Dp=30000.0;
+
+//	double B0= 1.1090;
+//	double B1=-0.1399;
+//	double B2=-0.0011;
+//	double B3=0.5209;
+	double Ms=7.3;
+	double Dp=20000.0;
+	double epicx=(double)(infoData.NXSC()-infoData.NBGX()+xhip)*(infoData.DH());
+	double epicy=(double)(infoData.NYSC()-infoData.NBGY()+yhip)*(infoData.DH());
+	double Lx=infoData.SX()*infoData.NSKPX()*infoData.DH();
+	double Ly=infoData.SY()*infoData.NSKPY()*infoData.DH();
+	double dxmax=( epicx > (Lx-epicx) )? epicx : Lx-epicx;
+	double dymax=( epicy > (Ly-epicy) )? epicy : Ly-epicy;
+//	double Dmax=sqrt(dxmax*dxmax+dymax*dymax);
+//	double ee=B0 + B1*log( Dp/Dp ) + B2*( (Dp-Dp)/1000.0 ) + B3*log(Ms);
+//	double mmi_max = exp( B0 + B1*log( Dp/Dp ) + B2*( (Dp-Dp)/1000.0 ) + B3*log(Ms) );
+//	double mmi_min = exp( B0 + B1*log( Dmax/Dp ) + B2*( (Dmax-Dp)/1000.0 ) + B3*log(Ms) );
+//	double mmi_max = exp( B0 + B1*( Dp/Dp ) + B2*log( (Dp-Dp+0.0001)/1000.0 ) + B3*log(Ms) );
+//	double mmi_min = exp( B0 + B1*( Dmax/Dp ) + B2*log( (Dmax-Dp+0.0001)/1000.0 ) + B3*log(Ms) );
+//	cout<<"Dmax="<<Dmax<<endl;
+//	cout<<"ee="<<ee<<endl;
+//	cout<<"mmi_min="<<mmi_min<<endl;
+//	cout<<"mmi_max="<<mmi_max<<endl;
+//	NiceScale nsMMI(mmi_min,mmi_max);
+	stringstream namePNG_MMI,nameSVG_MMI,nameRoot_MMI;
+	nameRoot_MMI<<nFilePrefix<<"-MMI";
+	namePNG_MMI<<nameRoot_MMI.str()<<".png";
+	nameSVG_MMI<<nameRoot_MMI.str()<<".svg";
+	cout<<namePNG_MMI.str()<<endl;
+	std::ofstream outMMI("./imagenes/"+namePNG_MMI.str(), std::ios::binary);
+	TinyPngOut pngoutMMI(static_cast<uint32_t>(SX), static_cast<uint32_t>(SY), outMMI);
+	std::vector<uint8_t> lineMMI(static_cast<size_t>(SX) * 3);
+
+
+
+	for (int y = SY-1; y >= 0; y--) {
+		for (int x = 0; x < SX; x++) {
+			uint8_t r, g, b;
+//			int index_xy = x + SX * y;
+			double dx=x*infoData.DH()-epicx;
+			double dy=y*infoData.DH()-epicy;
+			double D=sqrt(dx*dx+dy*dy);
+			double f=1.0;
+//			if(D>Dp){
+//				double mmi = exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000 ) + B3*log(Ms) );
+//				f = (mmi-nsMMI.niceMin)/(nsMMI.niceMax-nsMMI.niceMin);
+//				colorMap2.getColor(f, r, g, b);
+//				//cout<<mmi<<" ";
+//			}
+//			else{
+//				r=255;
+//				g=255;
+//				b=255;
+//			}
+
+			if(D>Dp){
+				double mmi = f2g1mmi(D,Dp,Ms);
+//						exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000 ) + B3*log(Ms) );
+//				double mmi = exp( B0 + B1*( D/Dp ) + B2*log( (D-Dp)/1000 ) + B3*log(Ms) );
+				//f = (mmi-nsMMI.niceMin)/(nsMMI.niceMax-nsMMI.niceMin);
+//				cout<<mmi<<" ";
+				//colorMap2.getColor(f, r, g, b);
+//				if( !(x%10==0 && y%10==0) ){
+//					r=255;
+//					g=255;
+//					b=255;
+//				}
+//				r=255;
+//				g=255;
+//				b=255;
+				for(const auto& m: MMI_Scale ){
+					if( mmi >=  m.min && mmi <  m.max ){ r=m.c.r; g=m.c.g; b=m.c.b;}
+				}
+
+			}
+			else{
+				r=0;
+				g=0;
+				b=0;
+			}
+
+			//cout<<" "<<f;
+
+			lineMMI[x * 3 + 0] = static_cast<uint8_t>(r);
+			lineMMI[x * 3 + 1] = static_cast<uint8_t>(g);
+			lineMMI[x * 3 + 2] = static_cast<uint8_t>(b);
+		}
+		//cout<<endl;
+		pngoutMMI.write(lineMMI.data(), static_cast<size_t>(SX));
+	}
+
+	vector<double> vRadio;
+
+	for(int i=1; i<=12; i++){
+		double Di=Dp;
+		double I=i+0.5;
+		double Df=Di + ( I - f2g1mmi(Di,Dp,Ms) )/df2g1mmi(Di,Dp,Ms);;
+		while(fabs(I - f2g1mmi(Di,Dp,Ms))>0.001){
+			Di=Df;
+			Df = Di + ( I - f2g1mmi(Di,Dp,Ms) )/df2g1mmi(Di,Dp,Ms);
+		}
+
+		//cout<<"Dp:"<<Dp<<" Df:"<<Df<<endl;
+//		if( Df > 0 ){
+//			cout<<"Df:"<<Df<<" mmi:"<<f2g1mmi(Df,Dp,Ms)<<endl;
+//			vRadio.push_back(Df);
+//		}
+		cout<<"Df:"<<Df<<" mmi:"<<f2g1mmi(Df,Dp,Ms)<<endl;
+		vRadio.push_back(Df);
+	}
+
+	make_svg_mmi("./imagenes/"+nameSVG_MMI.str(),"./"+namePNG_MMI.str(),vRadio);
+
+	stringstream namePNG_MMI_MaxVel,nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
+	nameRoot_MMI_MaxVel<<nFilePrefix<<"-MMI_MaxVel";
+	namePNG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".png";
+	nameSVG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".svg";
+	cout<<namePNG_MMI_MaxVel.str()<<endl;
+	make_svg_mmi_maxvel("./imagenes/"+nameSVG_MMI_MaxVel.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ,vRadio);
+
+	//cout<<"mmi_max="<<mmi_max<<endl;
 
 
 

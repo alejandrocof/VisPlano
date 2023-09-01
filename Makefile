@@ -13,7 +13,8 @@ SRCS =	main.cpp\
 	boundingBox.cpp\
 	LoadShapeFile.cpp\
 	lut.cpp\
-	sigfigs.cpp
+	sigfigs.cpp\
+	ReadCompleteInversion.cpp
 
 LIBS = -fopenmp
 INC= -I/usr/lib64
