@@ -2210,6 +2210,10 @@ int main(int argc, char *argv[])
 	ofstream output_file("./velMax.dat");
 	ostream_iterator<float> output_iterator(output_file, "\n");
 	copy(valmax.begin(), valmax.end(), output_iterator);
+
+	ofstream output_file_bin("./velMax_bin.dat", ios::out | ios::binary);
+	output_file_bin.write((char*)&valmax[0], valmax.size() * sizeof(float));
+	output_file_bin.close();
 	//	velMaxZ=0.002;
 	NiceScale nsMax(0,velMaxZ);
 
