@@ -2406,8 +2406,15 @@ int main(int argc, char *argv[])
 //	double B1=-0.1399;
 //	double B2=-0.0011;
 //	double B3=0.5209;
-	double Ms=7.3;
-	double Dp=20000.0;
+
+	//oaxaca
+//	double Ms=7.3;
+//	double Dp=20000.0;
+
+	//Acapulco
+	double Ms=7.1;
+	double Dp=15000.0;
+
 	double epicx=(double)(infoData.NXSC()-infoData.NBGX()+xhip)*(infoData.DH());
 	double epicy=(double)(infoData.NYSC()-infoData.NBGY()+yhip)*(infoData.DH());
 	double Lx=infoData.SX()*infoData.NSKPX()*infoData.DH();
