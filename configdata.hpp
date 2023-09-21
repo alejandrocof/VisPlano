@@ -29,6 +29,10 @@ public:
 	int initialstep=-1;
 	int xhip=std::numeric_limits<int>::max();
 	int yhip=std::numeric_limits<int>::max();
+	double Ms=-1;
+	double Dp=-1;
+	unsigned int Eq=0;
+	unsigned int Group=0;
 
 	vector<configComponent> data;
 };

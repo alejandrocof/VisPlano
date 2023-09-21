@@ -16,6 +16,7 @@
 #include <tuple>
 #include <iterator>
 
+
 #include "TinyPngOut.hpp"
 #include "configdata.hpp"
 
@@ -28,6 +29,7 @@
 #include "sigfigs.hpp"
 #include "Coord.hpp"
 #include "ReadCompleteInversion.hpp"
+#include "lut.hpp"
 
 //for i in Vx3D*.svg;do svg="${i}";png="${i}.png";echo "$png";rsvg-convert -w 3000 -h 2000 $svg -o $png; done
 //
@@ -89,51 +91,10 @@ NiceScale *nsSlip;
 //push(255,255,0);
 //push(255,102,0);
 //push(255,0,0);//max
-lut colorMap1(
-		vector<Color>{
-			Color(153,102,255),
-			Color(0,0,255),
-			Color(0,255,0),
-			Color(255,255,255),
-			Color(255,255,0),
-			Color(255,102,0),
-			Color(255,0,0),
-		}
-		);
 
-lut colorMap2(
-		vector<Color>{
-			Color(0,0,255),
-			Color(0,255,255),
-			Color(0,255,0),
-			Color(255,255,0),
-			Color(255,0,0),
-		}
-		);
-
-lut colorMap3(
-		vector<Color>{
-			Color(255,255,255),
-			Color(255,255,255),
-			Color(254,255,255),
-			Color(198,255,255),
-			Color(144,255,255),
-			Color(76,255,255),
-			Color(9,255,253),
-			Color(3,255,170),
-			Color(0,255,88),
-			Color(43,255,43),
-			Color(88,255,2),
-			Color(170,253,0),
-			Color(250,252,0),
-			Color(255,226,0),
-			Color(255,201,0),
-			Color(255,161,0),
-			Color(255,121,0),
-			Color(255,65,0),
-			Color(255,8,0),
-		}
-		);
+extern lut colorMap1;
+extern lut colorMap2;
+extern lut colorMap3;
 
 vector<Coord> estaciones={
 	Coord(-93.94, 14.94),
@@ -189,238 +150,56 @@ vector< mmi_val > MMI_Scale={
 	mmi_val( Color( 71,  0,  2),"XII. Extreme", 11.5, std::numeric_limits<double>::max(), 12.0),
 };
 
-vector< vector< pair<Coord,float> > > coordInvSlip={
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.8361, 14.7849 ), 1.2085 ),
-	pair<Coord, float>( Coord( -93.9031, 14.8474 ), 0.3241 ),
-	pair<Coord, float>( Coord( -93.9701, 14.9099 ), 2.1644 ),
-	pair<Coord, float>( Coord( -94.0371, 14.9724 ), 3.7018 ),
-	pair<Coord, float>( Coord( -94.1041, 15.035 ), 5.2758 ),
-	pair<Coord, float>( Coord( -94.1711, 15.0975 ), 8.4523 ),
-	pair<Coord, float>( Coord( -94.2381, 15.16 ), 11.0243 ),
-	pair<Coord, float>( Coord( -94.3051, 15.2225 ), 12.4847 ),
-	pair<Coord, float>( Coord( -94.3721, 15.285 ), 12.0623 ),
-	pair<Coord, float>( Coord( -94.4391, 15.3475 ), 5.9833 ),
-	pair<Coord, float>( Coord( -94.5061, 15.41 ), 2.7855 ),
-	pair<Coord, float>( Coord( -94.5731, 15.4726 ), 2.9093 ),
-	pair<Coord, float>( Coord( -94.6401, 15.5351 ), 3.86 ),
-	pair<Coord, float>( Coord( -94.7071, 15.5976 ), 4.278 ),
-	pair<Coord, float>( Coord( -94.7741, 15.6601 ), 4.3245 ),
-	pair<Coord, float>( Coord( -94.8411, 15.7226 ), 3.199 ),
-	pair<Coord, float>( Coord( -94.9081, 15.7851 ), 1.9694 ),
-	pair<Coord, float>( Coord( -94.9751, 15.8476 ), 0.8588 ),
-	pair<Coord, float>( Coord( -95.0421, 15.9102 ), 1.2472 ),
-	pair<Coord, float>( Coord( -95.1091, 15.9727 ), 2.4485 ),
-	pair<Coord, float>( Coord( -95.1761, 16.0352 ), 2.2737 ),
-	pair<Coord, float>( Coord( -95.2431, 16.0977 ), 1.8826 ),
-	pair<Coord, float>( Coord( -95.3101, 16.1602 ), 0.2158 ),
-	pair<Coord, float>( Coord( -95.3771, 16.2227 ), 0.0081 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.826, 14.7949 ), 1.3704 ),
-	pair<Coord, float>( Coord( -93.893, 14.8574 ), 0.1086 ),
-	pair<Coord, float>( Coord( -93.96, 14.9199 ), 0.3831 ),
-	pair<Coord, float>( Coord( -94.027, 14.9825 ), 2.3605 ),
-	pair<Coord, float>( Coord( -94.094, 15.045 ), 4.2536 ),
-	pair<Coord, float>( Coord( -94.161, 15.1075 ), 8.9265 ),
-	pair<Coord, float>( Coord( -94.228, 15.17 ), 13.8957 ),
-	pair<Coord, float>( Coord( -94.295, 15.2325 ), 17.2856 ),
-	pair<Coord, float>( Coord( -94.362, 15.295 ), 14.6803 ),
-	pair<Coord, float>( Coord( -94.429, 15.3575 ), 6.9058 ),
-	pair<Coord, float>( Coord( -94.496, 15.4201 ), 1.7789 ),
-	pair<Coord, float>( Coord( -94.563, 15.4826 ), 1.544 ),
-	pair<Coord, float>( Coord( -94.63, 15.5451 ), 3.8333 ),
-	pair<Coord, float>( Coord( -94.697, 15.6076 ), 4.6964 ),
-	pair<Coord, float>( Coord( -94.764, 15.6701 ), 4.0011 ),
-	pair<Coord, float>( Coord( -94.831, 15.7326 ), 3.7765 ),
-	pair<Coord, float>( Coord( -94.898, 15.7951 ), 2.5071 ),
-	pair<Coord, float>( Coord( -94.965, 15.8577 ), 0.6191 ),
-	pair<Coord, float>( Coord( -95.032, 15.9202 ), 0.7485 ),
-	pair<Coord, float>( Coord( -95.099, 15.9827 ), 2.4753 ),
-	pair<Coord, float>( Coord( -95.166, 16.0452 ), 3.132 ),
-	pair<Coord, float>( Coord( -95.233, 16.1077 ), 2.596 ),
-	pair<Coord, float>( Coord( -95.3, 16.1702 ), 0.6318 ),
-	pair<Coord, float>( Coord( -95.3671, 16.2327 ), 0.1851 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.816, 14.8049 ), 0.3362 ),
-	pair<Coord, float>( Coord( -93.883, 14.8675 ), 0.1048 ),
-	pair<Coord, float>( Coord( -93.95, 14.93 ), 0.0185 ),
-	pair<Coord, float>( Coord( -94.017, 14.9925 ), 0.0186 ),
-	pair<Coord, float>( Coord( -94.084, 15.055 ), 1.7433 ),
-	pair<Coord, float>( Coord( -94.151, 15.1175 ), 5.6352 ),
-	pair<Coord, float>( Coord( -94.218, 15.18 ), 10.9505 ),
-	pair<Coord, float>( Coord( -94.285, 15.2425 ), 15.618 ),
-	pair<Coord, float>( Coord( -94.352, 15.3051 ), 13.8754 ),
-	pair<Coord, float>( Coord( -94.419, 15.3676 ), 7.2563 ),
-	pair<Coord, float>( Coord( -94.486, 15.4301 ), 1.9013 ),
-	pair<Coord, float>( Coord( -94.553, 15.4926 ), 0.0568 ),
-	pair<Coord, float>( Coord( -94.62, 15.5551 ), 2.4806 ),
-	pair<Coord, float>( Coord( -94.687, 15.6176 ), 4.1033 ),
-	pair<Coord, float>( Coord( -94.754, 15.6801 ), 3.6514 ),
-	pair<Coord, float>( Coord( -94.821, 15.7427 ), 3.2483 ),
-	pair<Coord, float>( Coord( -94.888, 15.8052 ), 2.8411 ),
-	pair<Coord, float>( Coord( -94.955, 15.8677 ), 1.1402 ),
-	pair<Coord, float>( Coord( -95.022, 15.9302 ), 1.6413 ),
-	pair<Coord, float>( Coord( -95.089, 15.9927 ), 3.3868 ),
-	pair<Coord, float>( Coord( -95.156, 16.0552 ), 4.3071 ),
-	pair<Coord, float>( Coord( -95.223, 16.1177 ), 3.3376 ),
-	pair<Coord, float>( Coord( -95.29, 16.1803 ), 0.6541 ),
-	pair<Coord, float>( Coord( -95.357, 16.2428 ), 0.5982 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.806, 14.815 ), 0.2497 ),
-	pair<Coord, float>( Coord( -93.873, 14.8775 ), 0.0969 ),
-	pair<Coord, float>( Coord( -93.94, 14.94 ), 0.0053 ),
-	pair<Coord, float>( Coord( -94.007, 15.0025 ), 0.0124 ),
-	pair<Coord, float>( Coord( -94.074, 15.065 ), 0.2348 ),
-	pair<Coord, float>( Coord( -94.141, 15.1275 ), 4.5377 ),
-	pair<Coord, float>( Coord( -94.208, 15.1901 ), 8.9421 ),
-	pair<Coord, float>( Coord( -94.275, 15.2526 ), 12.2809 ),
-	pair<Coord, float>( Coord( -94.342, 15.3151 ), 11.2973 ),
-	pair<Coord, float>( Coord( -94.409, 15.3776 ), 7.4108 ),
-	pair<Coord, float>( Coord( -94.476, 15.4401 ), 2.6302 ),
-	pair<Coord, float>( Coord( -94.543, 15.5026 ), 0.0471 ),
-	pair<Coord, float>( Coord( -94.61, 15.5651 ), 0.5304 ),
-	pair<Coord, float>( Coord( -94.677, 15.6277 ), 2.5736 ),
-	pair<Coord, float>( Coord( -94.744, 15.6902 ), 3.1575 ),
-	pair<Coord, float>( Coord( -94.811, 15.7527 ), 2.5954 ),
-	pair<Coord, float>( Coord( -94.878, 15.8152 ), 2.4186 ),
-	pair<Coord, float>( Coord( -94.945, 15.8777 ), 2.2999 ),
-	pair<Coord, float>( Coord( -95.012, 15.9402 ), 3.3153 ),
-	pair<Coord, float>( Coord( -95.079, 16.0027 ), 4.7565 ),
-	pair<Coord, float>( Coord( -95.146, 16.0653 ), 3.9718 ),
-	pair<Coord, float>( Coord( -95.213, 16.1278 ), 2.9274 ),
-	pair<Coord, float>( Coord( -95.28, 16.1903 ), 0.6426 ),
-	pair<Coord, float>( Coord( -95.347, 16.2528 ), 0.0523 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.796, 14.825 ), 0.0328 ),
-	pair<Coord, float>( Coord( -93.863, 14.8875 ), 0.9085 ),
-	pair<Coord, float>( Coord( -93.93, 14.95 ), 2.0728 ),
-	pair<Coord, float>( Coord( -93.997, 15.0125 ), 1.4529 ),
-	pair<Coord, float>( Coord( -94.064, 15.0751 ), 0.1774 ),
-	pair<Coord, float>( Coord( -94.131, 15.1376 ), 2.3134 ),
-	pair<Coord, float>( Coord( -94.198, 15.2001 ), 5.9243 ),
-	pair<Coord, float>( Coord( -94.265, 15.2626 ), 9.3017 ),
-	pair<Coord, float>( Coord( -94.332, 15.3251 ), 7.8389 ),
-	pair<Coord, float>( Coord( -94.399, 15.3876 ), 5.6346 ),
-	pair<Coord, float>( Coord( -94.466, 15.4501 ), 2.7051 ),
-	pair<Coord, float>( Coord( -94.533, 15.5127 ), 0.0328 ),
-	pair<Coord, float>( Coord( -94.6, 15.5752 ), 0.0304 ),
-	pair<Coord, float>( Coord( -94.667, 15.6377 ), 1.5418 ),
-	pair<Coord, float>( Coord( -94.734, 15.7002 ), 2.2125 ),
-	pair<Coord, float>( Coord( -94.801, 15.7627 ), 1.8635 ),
-	pair<Coord, float>( Coord( -94.868, 15.8252 ), 1.1782 ),
-	pair<Coord, float>( Coord( -94.935, 15.8877 ), 2.2034 ),
-	pair<Coord, float>( Coord( -95.002, 15.9503 ), 3.2518 ),
-	pair<Coord, float>( Coord( -95.069, 16.0128 ), 3.718 ),
-	pair<Coord, float>( Coord( -95.136, 16.0753 ), 3.068 ),
-	pair<Coord, float>( Coord( -95.203, 16.1378 ), 1.5472 ),
-	pair<Coord, float>( Coord( -95.27, 16.2003 ), 0.0491 ),
-	pair<Coord, float>( Coord( -95.337, 16.2628 ), 0.0347 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.786, 14.835 ), 0.0667 ),
-	pair<Coord, float>( Coord( -93.853, 14.8975 ), 1.7382 ),
-	pair<Coord, float>( Coord( -93.92, 14.9601 ), 3.7073 ),
-	pair<Coord, float>( Coord( -93.987, 15.0226 ), 3.1796 ),
-	pair<Coord, float>( Coord( -94.054, 15.0851 ), 0.4228 ),
-	pair<Coord, float>( Coord( -94.121, 15.1476 ), 0.6852 ),
-	pair<Coord, float>( Coord( -94.188, 15.2101 ), 2.3665 ),
-	pair<Coord, float>( Coord( -94.255, 15.2726 ), 7.0848 ),
-	pair<Coord, float>( Coord( -94.322, 15.3351 ), 8.404 ),
-	pair<Coord, float>( Coord( -94.389, 15.3977 ), 8.2425 ),
-	pair<Coord, float>( Coord( -94.456, 15.4602 ), 4.9315 ),
-	pair<Coord, float>( Coord( -94.523, 15.5227 ), 2.8058 ),
-	pair<Coord, float>( Coord( -94.59, 15.5852 ), 1.7892 ),
-	pair<Coord, float>( Coord( -94.657, 15.6477 ), 2.1855 ),
-	pair<Coord, float>( Coord( -94.724, 15.7102 ), 1.2722 ),
-	pair<Coord, float>( Coord( -94.791, 15.7727 ), 1.1808 ),
-	pair<Coord, float>( Coord( -94.858, 15.8352 ), 0.6305 ),
-	pair<Coord, float>( Coord( -94.925, 15.8978 ), 1.0094 ),
-	pair<Coord, float>( Coord( -94.992, 15.9603 ), 0.772 ),
-	pair<Coord, float>( Coord( -95.059, 16.0228 ), 1.4909 ),
-	pair<Coord, float>( Coord( -95.126, 16.0853 ), 1.245 ),
-	pair<Coord, float>( Coord( -95.193, 16.1478 ), 0.0057 ),
-	pair<Coord, float>( Coord( -95.26, 16.2103 ), 0.2409 ),
-	pair<Coord, float>( Coord( -95.327, 16.2729 ), 0.0366 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.7759, 14.845 ), 0.9981 ),
-	pair<Coord, float>( Coord( -93.8429, 14.9076 ), 1.3444 ),
-	pair<Coord, float>( Coord( -93.9099, 14.9701 ), 1.1165 ),
-	pair<Coord, float>( Coord( -93.9769, 15.0326 ), 1.1299 ),
-	pair<Coord, float>( Coord( -94.0439, 15.0951 ), 0.0202 ),
-	pair<Coord, float>( Coord( -94.1109, 15.1576 ), 0.0428 ),
-	pair<Coord, float>( Coord( -94.1779, 15.2201 ), 1.4192 ),
-	pair<Coord, float>( Coord( -94.2449, 15.2826 ), 6.3503 ),
-	pair<Coord, float>( Coord( -94.3119, 15.3452 ), 8.9372 ),
-	pair<Coord, float>( Coord( -94.3789, 15.4077 ), 9.1017 ),
-	pair<Coord, float>( Coord( -94.4459, 15.4702 ), 6.9985 ),
-	pair<Coord, float>( Coord( -94.5129, 15.5327 ), 4.4127 ),
-	pair<Coord, float>( Coord( -94.5799, 15.5952 ), 2.6181 ),
-	pair<Coord, float>( Coord( -94.6469, 15.6577 ), 3.3315 ),
-	pair<Coord, float>( Coord( -94.7139, 15.7202 ), 1.8858 ),
-	pair<Coord, float>( Coord( -94.7809, 15.7828 ), 1.0494 ),
-	pair<Coord, float>( Coord( -94.8479, 15.8453 ), 0.6243 ),
-	pair<Coord, float>( Coord( -94.9149, 15.9078 ), 0.6064 ),
-	pair<Coord, float>( Coord( -94.9819, 15.9703 ), 0.6085 ),
-	pair<Coord, float>( Coord( -95.0489, 16.0328 ), 0.0484 ),
-	pair<Coord, float>( Coord( -95.1159, 16.0953 ), 0.7107 ),
-	pair<Coord, float>( Coord( -95.1829, 16.1578 ), 0.0417 ),
-	pair<Coord, float>( Coord( -95.2499, 16.2204 ), 0.1087 ),
-	pair<Coord, float>( Coord( -95.3169, 16.2829 ), 0.0847 )
-},
-	vector< pair<Coord,float> >{
-	pair<Coord, float>( Coord( -93.7659, 14.8551 ), 0.0326 ),
-	pair<Coord, float>( Coord( -93.8329, 14.9176 ), 0.0535 ),
-	pair<Coord, float>( Coord( -93.8999, 14.9801 ), 0.0859 ),
-	pair<Coord, float>( Coord( -93.9669, 15.0426 ), 0.0139 ),
-	pair<Coord, float>( Coord( -94.0339, 15.1051 ), 0.0717 ),
-	pair<Coord, float>( Coord( -94.1009, 15.1676 ), 0.0461 ),
-	pair<Coord, float>( Coord( -94.1679, 15.2302 ), 1.8136 ),
-	pair<Coord, float>( Coord( -94.2349, 15.2927 ), 4.328 ),
-	pair<Coord, float>( Coord( -94.3019, 15.3552 ), 6.8623 ),
-	pair<Coord, float>( Coord( -94.3689, 15.4177 ), 7.5617 ),
-	pair<Coord, float>( Coord( -94.4359, 15.4802 ), 6.0261 ),
-	pair<Coord, float>( Coord( -94.5029, 15.5427 ), 2.8364 ),
-	pair<Coord, float>( Coord( -94.5699, 15.6052 ), 2.0865 ),
-	pair<Coord, float>( Coord( -94.6369, 15.6678 ), 2.2582 ),
-	pair<Coord, float>( Coord( -94.7039, 15.7303 ), 1.0811 ),
-	pair<Coord, float>( Coord( -94.7709, 15.7928 ), 1.1201 ),
-	pair<Coord, float>( Coord( -94.8379, 15.8553 ), 1.2561 ),
-	pair<Coord, float>( Coord( -94.9049, 15.9178 ), 0.962 ),
-	pair<Coord, float>( Coord( -94.9719, 15.9803 ), 0.8502 ),
-	pair<Coord, float>( Coord( -95.0389, 16.0428 ), 0.0002 ),
-	pair<Coord, float>( Coord( -95.1059, 16.1054 ), 0.3045 ),
-	pair<Coord, float>( Coord( -95.1729, 16.1679 ), 0.0255 ),
-	pair<Coord, float>( Coord( -95.2399, 16.2304 ), 0.0036 ),
-	pair<Coord, float>( Coord( -95.3069, 16.2929 ), 0.347 )
-	}
-};
+//B's para la ecuación 2
+//el índice indica el grupo,
+//los grupos son 1, 2, 3,
+//el indice cero es basura
+//Grupo 1 Costa
+//Grupo 2 Interior
+//Grupo 3 Interior
+//Ejemplos G1: Oaxaca, Acapulco, Tecoman
+//Ejemplos G2: Puebla, Chiapas(dentro de placa)
+double B0[2][3] = { { 1.1090, 1.5188, 3.0021 }, { 1.3891, 0.6013, 2.0922 } };
+double B1[2][3] = { {-0.1399,-0.0672,-0.3057 }, {-0.0475,-0.0337,-0.0881 } };
+double B2[2][3] = { {-0.0011,-0.0021, 0.0019 }, {-0.0220,-0.0224,-0.0233 } };
+double B3[2][3] = { { 0.5209, 0.3314,-0.0325 }, { 0.3627, 0.7745, 0.0351 } };
 
-double f2g1mmi(double D, double Dp, double Ms){
-	double B0= 1.1090;
-	double B1=-0.1399;
-	double B2=-0.0011;
-	double B3=0.5209;
-	return exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000.0 ) + B3*log(Ms) );
+double EqMMI(unsigned int Eq, unsigned int group, double D, double Dp, double Ms){
+//	double B0= 1.1090;
+//	double B1=-0.1399;
+//	double B2=-0.0011;
+//	double B3=0.5209;
+	if( Eq == 2 )
+		return exp( B0[0][group-1] + B1[0][group-1]*log( D/Dp ) + B2[0][group-1]*( (D-Dp)/1000.0 ) + B3[0][group-1]*log(Ms) );
+	if( Eq == 3 )
+		return exp( B0[1][group-1] + B1[1][group-1]*( D/Dp ) + B2[1][group-1]*log( (D-Dp)/1000.0 ) + B3[1][group-1]*log(Ms) );
+	return 0;
 }
 
-double df2g1mmi(double D, double Dp, double Ms){
-	double B0= 1.1090;
-	double B1=-0.1399;
-	double B2=-0.0011;
-	double B3=0.5209;
-	return exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000.0 ) + B3*log(Ms) )*(B1/D+B2/1000.0);
+double dEqMMI_dD(unsigned int Eq, unsigned int group, double D, double Dp, double Ms){
+//	double B0= 1.1090;
+//	double B1=-0.1399;
+//	double B2=-0.0011;
+//	double B3=0.5209;
+	if( Eq == 2 )
+		return exp( B0[0][group-1] + B1[0][group-1]*log( D/Dp ) + B2[0][group-1]*( (D-Dp)/1000.0 ) + B3[0][group-1]*log(Ms) )*( B1[0][group-1]/D + B2[0][group-1]/1000.0 );
+	if( Eq == 3 )
+		return exp( B0[1][group-1] + B1[1][group-1]*( D/Dp ) + B2[1][group-1]*log( (D-Dp)/1000.0 ) + B3[1][group-1]*log(Ms) )*( B1[1][group-1]/Dp + B2[1][group-1]/(D-Dp));
+	return 0;
 }
 
 inputData infoData;
 ImgT img;
 //vector< vector<Coord> > coords;
-vector< vector< vector<Coord> > > isovel; //isovel coords coord
-vector< Color > color;
+//vector< vector< vector<Coord> > > isovel; //isovel coords coord
+//vector< Color > color;
+
+struct curve{
+	vector< vector<Coord> > iso;
+	Color color;
+};
+
+vector< curve > isovel;
 
 struct points{
 	double lat;
@@ -440,7 +219,48 @@ struct points{
 
 points origen;
 
+template<typename T>
+struct data2D{
+	vector<T> data;
+	int Nx,Ny;
+	T max = -std::numeric_limits<T>::max();
+	T min = std::numeric_limits<T>::max();
 
+	data2D(int Nx, int Ny):Nx(Nx),Ny(Ny){
+		data.resize( Nx*Ny );
+	}
+
+	data2D(int Nx, int Ny, T ini):Nx(Nx),Ny(Ny){
+		data.assign( Nx*Ny, ini );
+	}
+
+	void set(int i, int j, T val){
+		data[i + Nx * j]=val;
+	}
+
+	T get(int i, int j){
+		return data[i + Nx * j];
+	}
+
+	T Max(){
+		if(min<max)return max;
+		find_minmax();
+		return max;
+	}
+
+	T Min(){
+		if(min<max)return min;
+		find_minmax();
+		return min;
+	}
+
+	void find_minmax(){
+		auto it_min = min_element(begin(data), end(data));
+		auto it_max = max_element(begin(data), end(data));
+		min=*it_min;
+		max=*it_max;
+	}
+};
 
 
 bool compara0(points A,points B) { return ( (A.lat-origen.lat)*(A.lat-origen.lat)+(A.lon-origen.lon)*(A.lon-origen.lon) < (B.lat-origen.lat)*(B.lat-origen.lat)+(B.lon-origen.lon)*(B.lon-origen.lon) ); }
@@ -455,6 +275,24 @@ int calculaCifras(int num){
 	return contador;
 }
 
+
+std::vector<float> readFile(const char* filename)
+{
+	// open the file:
+	std::streampos fileSize;
+	std::ifstream file(filename, std::ios::binary);
+
+	// get its size:
+	file.seekg(0, std::ios::end);
+	fileSize = file.tellg();
+	file.seekg(0, std::ios::beg);
+	cout<<"FILE SIZE: "<<fileSize<<endl;
+
+	// read the data:
+	std::vector<float> fileData(fileSize);
+	file.read((char*) &fileData[0], fileSize);
+	return fileData;
+}
 //void pushColor(uint8_t r,uint8_t g,uint8_t b){
 //	lutColor.push_back(r);
 //	lutColor.push_back(g);
@@ -569,6 +407,164 @@ void slip(SVG2D &svg,bool addColor=true, string filename="complete_inversion.fsp
 	}else{
 		cout<<"No se encontro el archivo: complete_inversion.fsp"<<endl;
 	}
+}
+
+//struct scells{
+//	Color color;
+//	vector< vector<Coord> > isocurve;
+//}
+
+//vector< vector< vector<Coord> > >
+//void isoValue(vector<float> &value, int NX, int NY){
+vector< curve > isoValue(data2D<float> &value){
+//vector< vector< vector<Coord> > > isoValue(data2D<float> &value){
+	//vector< vector< vector<Coord> > > isovel; //isovel coords coord
+	//vector< Color > color;
+	vector<curve> cs;
+
+	float velMaxZ = -std::numeric_limits<float>::max();
+	float velMinZ =  std::numeric_limits<float>::max();
+	for (int i = 0; i < value.data.size(); i++){
+		float v = fabs( value.data[i] );
+		if( velMaxZ < v ) velMaxZ = v;
+		if( velMinZ > v ) velMinZ = v;
+	}
+
+
+
+	NiceScale nsMax(0,velMaxZ);
+
+
+	cout<<"velMinZ="<<velMinZ<<endl;
+	cout<<"velMaxZ="<<velMaxZ<<endl;
+
+	int CX=value.Nx-1;
+	int CY=value.Ny-1;
+	//vector<unsigned char> caseCorners( CX*CY,0 );
+	//cout<<"**** xy(0,0)->"<<img.xy(0,0).lon<<" "<<img.xy(0,0).lat<<endl;
+	//cout<<"**** xy(100,100)->"<<img.xy(100,100).lon<<" "<<img.xy(100,100).lat<<endl;
+
+	NiceScale nsThresholdMax(0,velMaxZ,12);
+	int N=nsThresholdMax.N();
+	for ( int k=1; k<N-1; k++ ){
+		float valThreshold=nsThresholdMax.niceMin + (float)k*nsThresholdMax.tickSpacing;
+		//vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
+		//for ( auto valThreshold: valsThreshold ){
+		//vector< vector<Coord> > isovalue;
+		curve isovalue;
+		for (int j = 0; j < CY; j++){
+			for (int i = 0; i < CX; i++){
+				int i0 = i + value.Nx*j;
+				int i1 = i+1 + value.Nx*j;
+				int i2 = i+1 + value.Nx*(j+1);
+				int i3 = i + value.Nx*(j+1);
+				unsigned char valKey=0;
+				if( value.data[i0]>valThreshold )valKey|=0x01;
+				if( value.data[i1]>valThreshold )valKey|=0x02;
+				if( value.data[i2]>valThreshold )valKey|=0x04;
+				if( value.data[i3]>valThreshold )valKey|=0x08;
+				//			float v = valmax[index];
+				//			if( velMaxZ < v ) velMaxZ = v;
+
+				//cout<<hex<<(int)valKey<<" ";
+				vector<Coord> lines;
+				float x,y,p;
+				switch(valKey){
+				case 1:
+					//				cout<<"case1"<<endl;
+					//				cout<<"i1="<<valmax[i1]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
+					//				cout<<"i3="<<valmax[i3]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
+				case 14:
+					x=(valThreshold-value.data[i0])/(value.data[i1]-value.data[i0]);
+					y=(valThreshold-value.data[i0])/(value.data[i3]-value.data[i0]);
+					lines.push_back(img.xy(i+x,j));
+					lines.push_back(img.xy(i,j+y));
+					break;
+				case 2:
+				case 13:
+					x=(valThreshold-value.data[i0])/(value.data[i1]-value.data[i0]);
+					y=(valThreshold-value.data[i1])/(value.data[i2]-value.data[i1]);
+					lines.push_back(img.xy(i+x, j));
+					lines.push_back(img.xy(i+1, j+y));
+					break;
+				case 3:
+				case 12:
+					x=(valThreshold-value.data[i0])/(value.data[i3]-value.data[i0]);
+					y=(valThreshold-value.data[i1])/(value.data[i2]-value.data[i1]);
+					lines.push_back(img.xy(i,j+x));
+					lines.push_back(img.xy(i+1,j+y));
+					break;
+				case 4:
+				case 11:
+					x=(valThreshold-value.data[i1])/(value.data[i2]-value.data[i1]);
+					y=(valThreshold-value.data[i3])/(value.data[i2]-value.data[i3]);
+					lines.push_back(img.xy(i+1, j+x));
+					lines.push_back(img.xy(i+y, j+1));
+					break;
+				case 5:
+				case 10:
+					p=(value.data[i0]+value.data[i1]+value.data[i2]+value.data[i3])/4.0;
+					if(fabs(value.data[i0]-p)+fabs(value.data[i2]-p)<fabs(value.data[i1]-p)+fabs(value.data[i3]-p)){
+						//7 y 8
+						x=(valThreshold-value.data[i3])/(value.data[i2]-value.data[i3]);
+						y=(valThreshold-value.data[i0])/(value.data[i3]-value.data[i0]);
+						lines.push_back(img.xy(i+x, j+1));
+						lines.push_back(img.xy(i, j+y));
+						//2 y 13
+						x=(valThreshold-value.data[i0])/(value.data[i1]-value.data[i0]);
+						y=(valThreshold-value.data[i1])/(value.data[i2]-value.data[i1]);
+						lines.push_back(img.xy(i+x, j));
+						lines.push_back(img.xy(i+1, j+y));
+					}
+					else{
+						//4 y 11
+						x=(valThreshold-value.data[i1])/(value.data[i2]-value.data[i1]);
+						y=(valThreshold-value.data[i3])/(value.data[i2]-value.data[i3]);
+						lines.push_back(img.xy(i+1, j+x));
+						lines.push_back(img.xy(i+y, j+1));
+						//1 y 14
+						x=(valThreshold-value.data[i0])/(value.data[i1]-value.data[i0]);
+						y=(valThreshold-value.data[i0])/(value.data[i3]-value.data[i0]);
+						lines.push_back(img.xy(i+x,j));
+						lines.push_back(img.xy(i,j+y));
+					}
+					break;
+				case 6:
+				case 9:
+					x=(valThreshold-value.data[i0])/(value.data[i1]-value.data[i0]);
+					y=(valThreshold-value.data[i3])/(value.data[i2]-value.data[i3]);
+					lines.push_back(img.xy(i+x, j));
+					lines.push_back(img.xy(i+y, j+1));
+					break;
+				case 7:
+				case 8:
+					x=(valThreshold-value.data[i3])/(value.data[i2]-value.data[i3]);
+					y=(valThreshold-value.data[i0])/(value.data[i3]-value.data[i0]);
+					lines.push_back(img.xy(i+x, j+1));
+					lines.push_back(img.xy(i, j+y));
+					break;
+				}
+
+				if( lines.size()>0 ){
+					//cout<<"size line"<<line.size()<<endl;
+					isovalue.iso.push_back(lines);
+				}
+			}
+			//cout<<endl;
+		}
+		Color _color;
+		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
+		colorMap2.getColor(f, _color.r, _color.g, _color.b);
+		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
+		isovalue.color.set(_color);
+
+
+//		c.color.push_back(_color);
+//		c.iso.push_back(isovalue);
+		cs.push_back(isovalue);
+	}
+	//return isovel;
+	return cs;
 }
 
 template <typename T>
@@ -930,9 +926,9 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	//	}
 
 	for(int k=0; k<isovel.size(); k++ ){
-		for(const vector<Coord>& vs: isovel[k] ){
+		for(const vector<Coord>& vs: isovel[k].iso ){
 			for(int i=0; i<vs.size()-1; i+=2){
-				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*color[k].r, 0.7*color[k].g, 0.7*color[k].b).strokeWidth(1.0).strokeLinecap("round") );
+				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
 			}
 		}
 	}
@@ -1192,9 +1188,9 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 
 
 	for(int k=0; k<isovel.size(); k++ ){
-		for(const vector<Coord>& vs: isovel[k] ){
+		for(const vector<Coord>& vs: isovel[k].iso ){
 			for(int i=0; i<vs.size()-1; i+=2){
-				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*color[k].r, 0.7*color[k].g, 0.7*color[k].b).strokeWidth(1.0).strokeLinecap("round") );
+				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
 			}
 		}
 	}
@@ -1529,9 +1525,9 @@ void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vma
 
 
 	for(int k=0; k<isovel.size(); k++ ){
-		for(const vector<Coord>& vs: isovel[k] ){
+		for(const vector<Coord>& vs: isovel[k].iso ){
 			for(int i=0; i<vs.size()-1; i+=2){
-				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*color[k].r, 0.7*color[k].g, 0.7*color[k].b).strokeWidth(1.0).strokeLinecap("round") );
+				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
 			}
 		}
 	}
@@ -1748,6 +1744,13 @@ int main(int argc, char *argv[])
 	//	xhip = infoData.xHip();
 	//	yhip = infoData.yHip();
 
+
+	double Ms=cdat.Ms;
+	double Dp=cdat.Dp;
+	unsigned int Eq=cdat.Eq;
+	unsigned int Group=cdat.Group;
+
+
 	//la transformación se debe revisar que parámetros recibe
 	transformation_settings_( infoData.DH(), infoData.NXSC()-infoData.NBGX(), infoData.NYSC()-infoData.NBGY(), infoData.SX()*infoData.NSKPX(), infoData.SY()*infoData.NSKPY());
 	make_map_();
@@ -1768,7 +1771,19 @@ int main(int argc, char *argv[])
 	val.resize( SX*SY*SZ );
 	valID.resize( SX*SY*SZ );
 
-	vector<float> valmax( SX*SY, -std::numeric_limits<float>::max() );
+//	vector<float> valmax( SX*SY, -std::numeric_limits<float>::max() );
+	data2D<float> valmax2( SX, SY, -std::numeric_limits<float>::max() );
+	bool calculateVmax = false;
+
+	if( cdat.step == -1 || !ifstream("./velMax.dat").good() ){
+		cout<<"Se calculará vmax"<<endl;
+		calculateVmax = true;
+	}
+	else{
+		cout<<"No se calculará vmax"<<endl;
+	}
+
+
 
 
 	int NParticionesSX=infoData.IndexXend()-infoData.IndexXini()+1;
@@ -2122,7 +2137,12 @@ int main(int argc, char *argv[])
 						int index_xy = x + SX * y;
 						float v=val[index_xyz];
 						double f = (v-ns.niceMin)/(ns.niceMax-ns.niceMin);
-						valmax[index_xy] = std::max( valmax[index_xy], fabs(v) );
+						//valmax[index_xy] = std::max( valmax[index_xy], fabs(v) );
+
+						if( calculateVmax ){
+							valmax2.set(x,y,std::max( valmax2.get(x,y), fabs(v) ));
+						}
+
 						colorMap1.getColor(f, r, g, b);
 						//cout<<x+SX*y+SX*SY*cdat.data[i].pz[j]<<" ";
 						//cout<<val[x+SX*y+SX*SY*cdat.data[i].pz[j]]-min<<" ";
@@ -2198,149 +2218,170 @@ int main(int argc, char *argv[])
 	}//fin for tiempo
 
 
-	float velMaxZ = -std::numeric_limits<float>::max();
-	float velMinZ =  std::numeric_limits<float>::max();
-	for (int i = 0; i < valmax.size(); i++){
-		float v = fabs( valmax[i] );
-		if( velMaxZ < v ) velMaxZ = v;
-		if( velMinZ > v ) velMinZ = v;
+	if( calculateVmax ){
+//		ofstream output_file("./velMax.dat");
+//		ostream_iterator<float> output_iterator(output_file, "\n");
+//		copy(valmax2.data.begin(), valmax2.data.end(), output_iterator);
+
+		ofstream output_file_bin("./velMax_bin.dat", ios::out | ios::binary);
+		output_file_bin.write( (char*)&valmax2.data.at(0) , valmax2.data.size() * sizeof(float));
+		output_file_bin.close();
+		//	velMaxZ=0.002;
+	}
+	else{
+
+//		cout<<"leyendo vmax"<<endl;
+//		ifstream input_file_bin("./velMax_bin.dat", ios::binary);
+//		cout<<"copiando vmax"<<endl;
+//		std::copy(std::istream_iterator<char>(input_file_bin),
+//				  std::istream_iterator<char>(),
+//				  std::back_inserter(valmax2.data));
+
+//		valmax2.data.insert(valmax2.data.begin(),
+//							std::istream_iterator<unsigned char>(input_file_bin),
+//							std::istream_iterator<unsigned char>());
+		valmax2.data=readFile("./velMax_bin.dat");
+
 	}
 
 
-	ofstream output_file("./velMax.dat");
-	ostream_iterator<float> output_iterator(output_file, "\n");
-	copy(valmax.begin(), valmax.end(), output_iterator);
+//	float velMaxZ = -std::numeric_limits<float>::max();
+//	float velMinZ =  std::numeric_limits<float>::max();
+//	for (int i = 0; i < valmax.size(); i++){
+//		float v = fabs( valmax[i] );
+//		if( velMaxZ < v ) velMaxZ = v;
+//		if( velMinZ > v ) velMinZ = v;
+//	}
 
-	ofstream output_file_bin("./velMax_bin.dat", ios::out | ios::binary);
-	output_file_bin.write((char*)&valmax[0], valmax.size() * sizeof(float));
-	output_file_bin.close();
-	//	velMaxZ=0.002;
-	NiceScale nsMax(0,velMaxZ);
+	valmax2.find_minmax();
+
+	//NiceScale nsMax(0,velMaxZ);
+	NiceScale nsMax(0,valmax2.Max() );
 
 
-	cout<<"velMinZ="<<velMinZ<<endl;
-	cout<<"velMaxZ="<<velMaxZ<<endl;
+//	cout<<"velMinZ="<<velMinZ<<endl;
+//	cout<<"velMaxZ="<<velMaxZ<<endl;
 
-	int CX=SX-1;
-	int CY=SY-1;
-	//vector<unsigned char> caseCorners( CX*CY,0 );
-	//cout<<"**** xy(0,0)->"<<img.xy(0,0).lon<<" "<<img.xy(0,0).lat<<endl;
-	//cout<<"**** xy(100,100)->"<<img.xy(100,100).lon<<" "<<img.xy(100,100).lat<<endl;
+//	int CX=SX-1;
+//	int CY=SY-1;
+//	//vector<unsigned char> caseCorners( CX*CY,0 );
+//	//cout<<"**** xy(0,0)->"<<img.xy(0,0).lon<<" "<<img.xy(0,0).lat<<endl;
+//	//cout<<"**** xy(100,100)->"<<img.xy(100,100).lon<<" "<<img.xy(100,100).lat<<endl;
 
-	NiceScale nsThresholdMax(0,velMaxZ,12);
-	int N=nsThresholdMax.N();
-	for ( int k=1; k<N-1; k++ ){
-		float valThreshold=nsThresholdMax.niceMin + (float)k*nsThresholdMax.tickSpacing;
-		//vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
-		//for ( auto valThreshold: valsThreshold ){
-		vector< vector<Coord> > coords;
-		for (int j = 0; j < CY; j++){
-			for (int i = 0; i < CX; i++){
-				int i0 = i + SX*j;
-				int i1 = i+1 + SX*j;
-				int i2 = i+1 + SX*(j+1);
-				int i3 = i + SX*(j+1);
-				unsigned char valKey=0;
-				if( valmax[i0]>valThreshold )valKey|=0x01;
-				if( valmax[i1]>valThreshold )valKey|=0x02;
-				if( valmax[i2]>valThreshold )valKey|=0x04;
-				if( valmax[i3]>valThreshold )valKey|=0x08;
-				//			float v = valmax[index];
-				//			if( velMaxZ < v ) velMaxZ = v;
+//	NiceScale nsThresholdMax(0,velMaxZ,12);
+//	int N=nsThresholdMax.N();
+//	for ( int k=1; k<N-1; k++ ){
+//		float valThreshold=nsThresholdMax.niceMin + (float)k*nsThresholdMax.tickSpacing;
+//		//vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
+//		//for ( auto valThreshold: valsThreshold ){
+//		vector< vector<Coord> > coords;
+//		for (int j = 0; j < CY; j++){
+//			for (int i = 0; i < CX; i++){
+//				int i0 = i + SX*j;
+//				int i1 = i+1 + SX*j;
+//				int i2 = i+1 + SX*(j+1);
+//				int i3 = i + SX*(j+1);
+//				unsigned char valKey=0;
+//				if( valmax[i0]>valThreshold )valKey|=0x01;
+//				if( valmax[i1]>valThreshold )valKey|=0x02;
+//				if( valmax[i2]>valThreshold )valKey|=0x04;
+//				if( valmax[i3]>valThreshold )valKey|=0x08;
+//				//			float v = valmax[index];
+//				//			if( velMaxZ < v ) velMaxZ = v;
 
-				//cout<<hex<<(int)valKey<<" ";
-				vector<Coord> line;
-				float x,y,p;
-				switch(valKey){
-				case 1:
-					//				cout<<"case1"<<endl;
-					//				cout<<"i1="<<valmax[i1]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
-					//				cout<<"i3="<<valmax[i3]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
-				case 14:
-					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-					line.push_back(img.xy(i+x,j));
-					line.push_back(img.xy(i,j+y));
-					break;
-				case 2:
-				case 13:
-					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-					line.push_back(img.xy(i+x, j));
-					line.push_back(img.xy(i+1, j+y));
-					break;
-				case 3:
-				case 12:
-					x=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-					line.push_back(img.xy(i,j+x));
-					line.push_back(img.xy(i+1,j+y));
-					break;
-				case 4:
-				case 11:
-					x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-					line.push_back(img.xy(i+1, j+x));
-					line.push_back(img.xy(i+y, j+1));
-					break;
-				case 5:
-				case 10:
-					p=(valmax[i0]+valmax[i1]+valmax[i2]+valmax[i3])/4.0;
-					if(fabs(valmax[i0]-p)+fabs(valmax[i2]-p)<fabs(valmax[i1]-p)+fabs(valmax[i3]-p)){
-						//7 y 8
-						x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-						line.push_back(img.xy(i+x, j+1));
-						line.push_back(img.xy(i, j+y));
-						//2 y 13
-						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-						y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-						line.push_back(img.xy(i+x, j));
-						line.push_back(img.xy(i+1, j+y));
-					}
-					else{
-						//4 y 11
-						x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-						y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-						line.push_back(img.xy(i+1, j+x));
-						line.push_back(img.xy(i+y, j+1));
-						//1 y 14
-						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-						line.push_back(img.xy(i+x,j));
-						line.push_back(img.xy(i,j+y));
-					}
-					break;
-				case 6:
-				case 9:
-					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-					line.push_back(img.xy(i+x, j));
-					line.push_back(img.xy(i+y, j+1));
-					break;
-				case 7:
-				case 8:
-					x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-					line.push_back(img.xy(i+x, j+1));
-					line.push_back(img.xy(i, j+y));
-					break;
-				}
+//				//cout<<hex<<(int)valKey<<" ";
+//				vector<Coord> line;
+//				float x,y,p;
+//				switch(valKey){
+//				case 1:
+//					//				cout<<"case1"<<endl;
+//					//				cout<<"i1="<<valmax[i1]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
+//					//				cout<<"i3="<<valmax[i3]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
+//				case 14:
+//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
+//					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
+//					line.push_back(img.xy(i+x,j));
+//					line.push_back(img.xy(i,j+y));
+//					break;
+//				case 2:
+//				case 13:
+//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
+//					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
+//					line.push_back(img.xy(i+x, j));
+//					line.push_back(img.xy(i+1, j+y));
+//					break;
+//				case 3:
+//				case 12:
+//					x=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
+//					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
+//					line.push_back(img.xy(i,j+x));
+//					line.push_back(img.xy(i+1,j+y));
+//					break;
+//				case 4:
+//				case 11:
+//					x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
+//					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
+//					line.push_back(img.xy(i+1, j+x));
+//					line.push_back(img.xy(i+y, j+1));
+//					break;
+//				case 5:
+//				case 10:
+//					p=(valmax[i0]+valmax[i1]+valmax[i2]+valmax[i3])/4.0;
+//					if(fabs(valmax[i0]-p)+fabs(valmax[i2]-p)<fabs(valmax[i1]-p)+fabs(valmax[i3]-p)){
+//						//7 y 8
+//						x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
+//						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
+//						line.push_back(img.xy(i+x, j+1));
+//						line.push_back(img.xy(i, j+y));
+//						//2 y 13
+//						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
+//						y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
+//						line.push_back(img.xy(i+x, j));
+//						line.push_back(img.xy(i+1, j+y));
+//					}
+//					else{
+//						//4 y 11
+//						x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
+//						y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
+//						line.push_back(img.xy(i+1, j+x));
+//						line.push_back(img.xy(i+y, j+1));
+//						//1 y 14
+//						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
+//						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
+//						line.push_back(img.xy(i+x,j));
+//						line.push_back(img.xy(i,j+y));
+//					}
+//					break;
+//				case 6:
+//				case 9:
+//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
+//					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
+//					line.push_back(img.xy(i+x, j));
+//					line.push_back(img.xy(i+y, j+1));
+//					break;
+//				case 7:
+//				case 8:
+//					x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
+//					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
+//					line.push_back(img.xy(i+x, j+1));
+//					line.push_back(img.xy(i, j+y));
+//					break;
+//				}
 
-				if( line.size()>0 ){
-					//cout<<"size line"<<line.size()<<endl;
-					coords.push_back(line);
-				}
-			}
-			//cout<<endl;
-		}
-		Color _color;
-		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
-		colorMap2.getColor(f, _color.r, _color.g, _color.b);
-		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
-		color.push_back(_color);
-		isovel.push_back(coords);
-	}
+//				if( line.size()>0 ){
+//					//cout<<"size line"<<line.size()<<endl;
+//					coords.push_back(line);
+//				}
+//			}
+//			//cout<<endl;
+//		}
+//		Color _color;
+//		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
+//		colorMap2.getColor(f, _color.r, _color.g, _color.b);
+//		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
+//		color.push_back(_color);
+//		isovel.push_back(coords);
+//	}
 
 
 	//	(0,SY-1)...(SX-1,SY-1)
@@ -2348,6 +2389,11 @@ int main(int argc, char *argv[])
 	//	  .             .
 	//	  .             .
 	//	(0,0)......(SX-1,0)
+
+	//isovel=new (isoValue(valmax, SX, SY));
+	//isoValue(valmax, SX, SY);
+	//isoValue(valmax2.data, SX, SY);
+	isovel=isoValue(valmax2);
 
 	stringstream namePNG_MaxZ,nameSVG_MaxZ,nameRoot_MaxZ;
 	nameRoot_MaxZ<<nFilePrefix<<"-MaxZ";
@@ -2361,7 +2407,8 @@ int main(int argc, char *argv[])
 		for (int x = 0; x < SX; x++) {
 			uint8_t r, g, b;
 			int index_xy = x + SX * y;
-			double f = (valmax[index_xy]-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
+			//double f = (valmax[index_xy]-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
+			double f = (valmax2.get(x,y)-nsMax.niceMin)/(nsMax.niceMax-nsMax.niceMin);
 			colorMap2.getColor(f, r, g, b);
 
 //			if( id2ijk.at(valID[index_xy]).i % 2 == id2ijk.at(valID[index_xy]).j % 2 ){
@@ -2386,149 +2433,100 @@ int main(int argc, char *argv[])
 		//cout<<endl;
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
-	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ);
+	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max());
 
+	//Oaxaca eq 2 group 1
+	//double Ms=7.3;
+	//double Dp=20000.0;
 
-//	double B0= 1.1090;
-//	double B1=-0.1399;
-//	double B2=-0.0011;
-//	double B3=0.5209;
-//	double Ms=8.1;
-//	double Dp=44000.0;
-//	double B0= 1.5188;
-//	double B1=-0.0672;
-//	double B2=-0.0021;
-//	double B3= 0.3314;
-//	double Ms=7.0;
-//	double Dp=30000.0;
+	//Acapulco eq 2 group 1
+	//double Ms=7.1;
+	//double Dp=15000.0;
 
-//	double B0= 1.1090;
-//	double B1=-0.1399;
-//	double B2=-0.0011;
-//	double B3=0.5209;
+	//Chiapas 2017 eq 2 group 2
+	//double Ms=8.3;
+	//double Dp=40000.0;
 
-	//oaxaca
-//	double Ms=7.3;
-//	double Dp=20000.0;
+	if( Ms>0.0	&& Dp>0.0
+			&& (Eq==1 || Eq==2)
+			&& (Group==1 || Group==2 || Group==3 ) ){
+		ofstream outDataMMI("ValoresMMI.dat",ios::out);
+		if (!outDataMMI)
+			cout << "\n No se pudo crear el archivo ValoresMMI.dat"<<endl;
+		else {
+			outDataMMI<<"Ms="<<Ms<<endl;
+			outDataMMI<<"Dp="<<Dp<<endl;
+			outDataMMI<<"Eq="<<Eq<<endl;
+			outDataMMI<<"Group="<<Group<<endl;
+			outDataMMI<<"B0:"<<B0[Eq-2][Group-1]<<endl;
+			outDataMMI<<"B1:"<<B1[0][Group-1]<<endl;
+			outDataMMI<<"B2:"<<B2[0][Group-1]<<endl;
+			outDataMMI<<"B3:"<<B3[0][Group-1]<<endl;
+			outDataMMI.close();
+		}
 
-	//Acapulco
-	double Ms=7.1;
-	double Dp=15000.0;
+		double epicx=(double)(infoData.NXSC()-infoData.NBGX()+xhip)*(infoData.DH());
+		double epicy=(double)(infoData.NYSC()-infoData.NBGY()+yhip)*(infoData.DH());
+		double Lx=infoData.SX()*infoData.NSKPX()*infoData.DH();
+		double Ly=infoData.SY()*infoData.NSKPY()*infoData.DH();
+		stringstream namePNG_MMI,nameSVG_MMI,nameRoot_MMI;
+		nameRoot_MMI<<nFilePrefix<<"-MMI";
+		namePNG_MMI<<nameRoot_MMI.str()<<".png";
+		nameSVG_MMI<<nameRoot_MMI.str()<<".svg";
+		cout<<namePNG_MMI.str()<<endl;
+		std::ofstream outMMI("./imagenes/"+namePNG_MMI.str(), std::ios::binary);
+		TinyPngOut pngoutMMI(static_cast<uint32_t>(SX), static_cast<uint32_t>(SY), outMMI);
+		std::vector<uint8_t> lineMMI(static_cast<size_t>(SX) * 3);
 
-	double epicx=(double)(infoData.NXSC()-infoData.NBGX()+xhip)*(infoData.DH());
-	double epicy=(double)(infoData.NYSC()-infoData.NBGY()+yhip)*(infoData.DH());
-	double Lx=infoData.SX()*infoData.NSKPX()*infoData.DH();
-	double Ly=infoData.SY()*infoData.NSKPY()*infoData.DH();
-	double dxmax=( epicx > (Lx-epicx) )? epicx : Lx-epicx;
-	double dymax=( epicy > (Ly-epicy) )? epicy : Ly-epicy;
-//	double Dmax=sqrt(dxmax*dxmax+dymax*dymax);
-//	double ee=B0 + B1*log( Dp/Dp ) + B2*( (Dp-Dp)/1000.0 ) + B3*log(Ms);
-//	double mmi_max = exp( B0 + B1*log( Dp/Dp ) + B2*( (Dp-Dp)/1000.0 ) + B3*log(Ms) );
-//	double mmi_min = exp( B0 + B1*log( Dmax/Dp ) + B2*( (Dmax-Dp)/1000.0 ) + B3*log(Ms) );
-//	double mmi_max = exp( B0 + B1*( Dp/Dp ) + B2*log( (Dp-Dp+0.0001)/1000.0 ) + B3*log(Ms) );
-//	double mmi_min = exp( B0 + B1*( Dmax/Dp ) + B2*log( (Dmax-Dp+0.0001)/1000.0 ) + B3*log(Ms) );
-//	cout<<"Dmax="<<Dmax<<endl;
-//	cout<<"ee="<<ee<<endl;
-//	cout<<"mmi_min="<<mmi_min<<endl;
-//	cout<<"mmi_max="<<mmi_max<<endl;
-//	NiceScale nsMMI(mmi_min,mmi_max);
-	stringstream namePNG_MMI,nameSVG_MMI,nameRoot_MMI;
-	nameRoot_MMI<<nFilePrefix<<"-MMI";
-	namePNG_MMI<<nameRoot_MMI.str()<<".png";
-	nameSVG_MMI<<nameRoot_MMI.str()<<".svg";
-	cout<<namePNG_MMI.str()<<endl;
-	std::ofstream outMMI("./imagenes/"+namePNG_MMI.str(), std::ios::binary);
-	TinyPngOut pngoutMMI(static_cast<uint32_t>(SX), static_cast<uint32_t>(SY), outMMI);
-	std::vector<uint8_t> lineMMI(static_cast<size_t>(SX) * 3);
-
-
-
-	for (int y = SY-1; y >= 0; y--) {
-		for (int x = 0; x < SX; x++) {
-			uint8_t r, g, b;
-//			int index_xy = x + SX * y;
-			double dx=x*infoData.DH()-epicx;
-			double dy=y*infoData.DH()-epicy;
-			double D=sqrt(dx*dx+dy*dy);
-			double f=1.0;
-//			if(D>Dp){
-//				double mmi = exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000 ) + B3*log(Ms) );
-//				f = (mmi-nsMMI.niceMin)/(nsMMI.niceMax-nsMMI.niceMin);
-//				colorMap2.getColor(f, r, g, b);
-//				//cout<<mmi<<" ";
-//			}
-//			else{
-//				r=255;
-//				g=255;
-//				b=255;
-//			}
-
-			if(D>Dp){
-				double mmi = f2g1mmi(D,Dp,Ms);
-//						exp( B0 + B1*log( D/Dp ) + B2*( (D-Dp)/1000 ) + B3*log(Ms) );
-//				double mmi = exp( B0 + B1*( D/Dp ) + B2*log( (D-Dp)/1000 ) + B3*log(Ms) );
-				//f = (mmi-nsMMI.niceMin)/(nsMMI.niceMax-nsMMI.niceMin);
-//				cout<<mmi<<" ";
-				//colorMap2.getColor(f, r, g, b);
-//				if( !(x%10==0 && y%10==0) ){
-//					r=255;
-//					g=255;
-//					b=255;
-//				}
-//				r=255;
-//				g=255;
-//				b=255;
-				for(const auto& m: MMI_Scale ){
-					if( mmi >=  m.min && mmi <  m.max ){ r=m.c.r; g=m.c.g; b=m.c.b;}
+		for (int y = SY-1; y >= 0; y--) {
+			for (int x = 0; x < SX; x++) {
+				uint8_t r, g, b;
+				double dx=x*infoData.DH()-epicx;
+				double dy=y*infoData.DH()-epicy;
+				double D=sqrt(dx*dx+dy*dy);
+				if(D>Dp){
+					double mmi = EqMMI(Eq, Group, D, Dp, Ms);
+					for(const auto& m: MMI_Scale ){
+						if( mmi >=  m.min && mmi <  m.max ){ r=m.c.r; g=m.c.g; b=m.c.b;}
+					}
+				}
+				else{
+					r=0;
+					g=0;
+					b=0;
 				}
 
+				lineMMI[x * 3 + 0] = static_cast<uint8_t>(r);
+				lineMMI[x * 3 + 1] = static_cast<uint8_t>(g);
+				lineMMI[x * 3 + 2] = static_cast<uint8_t>(b);
 			}
-			else{
-				r=0;
-				g=0;
-				b=0;
-			}
-
-			//cout<<" "<<f;
-
-			lineMMI[x * 3 + 0] = static_cast<uint8_t>(r);
-			lineMMI[x * 3 + 1] = static_cast<uint8_t>(g);
-			lineMMI[x * 3 + 2] = static_cast<uint8_t>(b);
-		}
-		//cout<<endl;
-		pngoutMMI.write(lineMMI.data(), static_cast<size_t>(SX));
-	}
-
-	vector<double> vRadio;
-
-	for(int i=1; i<=12; i++){
-		double Di=Dp;
-		double I=i+0.5;
-		double Df=Di + ( I - f2g1mmi(Di,Dp,Ms) )/df2g1mmi(Di,Dp,Ms);;
-		while(fabs(I - f2g1mmi(Di,Dp,Ms))>0.001){
-			Di=Df;
-			Df = Di + ( I - f2g1mmi(Di,Dp,Ms) )/df2g1mmi(Di,Dp,Ms);
+			pngoutMMI.write(lineMMI.data(), static_cast<size_t>(SX));
 		}
 
-		//cout<<"Dp:"<<Dp<<" Df:"<<Df<<endl;
-//		if( Df > 0 ){
-//			cout<<"Df:"<<Df<<" mmi:"<<f2g1mmi(Df,Dp,Ms)<<endl;
-//			vRadio.push_back(Df);
-//		}
-		cout<<"Df:"<<Df<<" mmi:"<<f2g1mmi(Df,Dp,Ms)<<endl;
-		vRadio.push_back(Df);
+		vector<double> vRadio;
+
+		for(int i=1; i<=12; i++){
+			double Di=Dp;
+			double I=i+0.5;
+			double Df=Di + ( I - EqMMI( Eq, Group, Di, Dp, Ms) )/dEqMMI_dD( Eq, Group, Di, Dp, Ms );
+			while(fabs(I - EqMMI( Eq, Group, Di, Dp, Ms ))>0.001){
+				Di=Df;
+				Df = Di + ( I - EqMMI( Eq, Group, Di, Dp, Ms ) )/dEqMMI_dD( Eq, Group, Di, Dp, Ms );
+			}
+			cout<<"Df:"<<Df<<" mmi:"<<EqMMI( Eq, Group, Df, Dp, Ms)<<endl;
+			vRadio.push_back(Df);
+		}
+
+		make_svg_mmi("./imagenes/"+nameSVG_MMI.str(),"./"+namePNG_MMI.str(),vRadio);
+
+		stringstream namePNG_MMI_MaxVel,nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
+		nameRoot_MMI_MaxVel<<nFilePrefix<<"-MMI_MaxVel";
+		namePNG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".png";
+		nameSVG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".svg";
+		cout<<namePNG_MMI_MaxVel.str()<<endl;
+		make_svg_mmi_maxvel("./imagenes/"+nameSVG_MMI_MaxVel.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max(),vRadio);
 	}
 
-	make_svg_mmi("./imagenes/"+nameSVG_MMI.str(),"./"+namePNG_MMI.str(),vRadio);
-
-	stringstream namePNG_MMI_MaxVel,nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
-	nameRoot_MMI_MaxVel<<nFilePrefix<<"-MMI_MaxVel";
-	namePNG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".png";
-	nameSVG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".svg";
-	cout<<namePNG_MMI_MaxVel.str()<<endl;
-	make_svg_mmi_maxvel("./imagenes/"+nameSVG_MMI_MaxVel.str(),"./"+namePNG_MaxZ.str(), 0,velMaxZ,vRadio);
-
-	//cout<<"mmi_max="<<mmi_max<<endl;
 
 
 

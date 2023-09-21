@@ -18,8 +18,18 @@ struct Color{
 		this->b=b;
 	}
 
+	void set(Color c){
+		this->r=c.r;
+		this->g=c.g;
+		this->b=c.b;
+	}
 	Color(){}
 };
+
+//Color& Color::operator=(const Color &c){
+//	r = c.r; g = c.g; b = c.b;
+//	return *this;
+//}
 
 class lut{
     std::vector<uint8_t> vec;
@@ -35,5 +45,7 @@ class lut{
 	void getColor(float lambda, Color &color);
     bool colorMapDefault;
 };
+
+
 
 #endif

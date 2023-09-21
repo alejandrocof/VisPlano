@@ -47,6 +47,34 @@ configData::configData(int argc, char *argv[])
 				}
 			}
 				break;
+			case FnvHash("-Ms"):
+			{
+				if( !(stringstream(allArgs[++i]) >> Ms) ){
+					cout<<"Error en el valor de Ms: "<<allArgs[i]<<endl;
+				}
+			}
+				break;
+			case FnvHash("-Dp")://Dp se debe de dar en metros
+			{
+				if( !(stringstream(allArgs[++i]) >> Dp) ){
+					cout<<"Error en el valor de Dp: "<<allArgs[i]<<endl;
+				}
+			}
+				break;
+			case FnvHash("-Eq"):
+			{
+				if( !(stringstream(allArgs[++i]) >> Eq) ){
+					cout<<"Error en el valor de Eq: "<<allArgs[i]<<endl;
+				}
+			}
+				break;
+			case FnvHash("-Group"):
+			{
+				if( !(stringstream(allArgs[++i]) >> Group) ){
+					cout<<"Error en el valor de Group: "<<allArgs[i]<<endl;
+				}
+			}
+				break;
 			case FnvHash("-vx"):
 				data.emplace_back(X,min,max);
 				break;
