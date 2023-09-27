@@ -10,7 +10,7 @@ ReadCompleteInversion::ReadCompleteInversion(ifstream &File){
 	    string commentary,key,colon;
 	    stringstream ssline(line);
 	    ssline>>commentary>>key>>colon;
-	    if(key=="Invs" && colon==":"){
+		if( ( key=="Invs" || key=="Loc" || key=="Mech" ) && colon==":"){
 		    getline(ssline,line);
 		    std::size_t found;
 		    found = line.find("(");

@@ -15,13 +15,28 @@
 
 using namespace std;
 
-enum class ShapeName{Rectangle,Circle,Ellipse,Line,Polyline,Polygon,Path,Text,
+enum class ShapeName{IniGroup,EndGroup,Rectangle,Circle,Ellipse,Line,Polyline,Polygon,Path,Text,
 					 LinearGradient,Image,ColorMap,ColorBar,Point,Mesh,ShapeFile,Use, Mask, MaskRaw};
 
 
 class Shape{
 public:
 	Shape(){}
+	Shape& IniGroup(const string& str){
+		clear();
+		head<<"<g id='"<<str<<"'";
+		tail<<">"<<endl;
+		_shp=ShapeName::IniGroup;
+		return *this;
+	}
+
+	Shape& EndGroup(){
+		clear();
+		head<<"</g";
+		tail<<">"<<endl;
+		_shp=ShapeName::EndGroup;
+		return *this;
+	}
 
 	Shape& Rectangle(const float& x, const float& y, const float& width, const float& height){
 		clear();

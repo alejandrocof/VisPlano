@@ -2,6 +2,8 @@
 
 ostream& operator << (ostream &o,const Shape& tex){
   switch(tex._shp){
+	case ShapeName::IniGroup:
+	case ShapeName::EndGroup:
     case ShapeName::Rectangle:
     case ShapeName::Circle:
     case ShapeName::Ellipse:
@@ -29,7 +31,6 @@ ostream& operator << (ostream &o,const Shape& tex){
       }
       o <<tex.tail.str();
     break;
-
   };
   return o;
 }
