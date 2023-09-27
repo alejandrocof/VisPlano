@@ -1375,7 +1375,7 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 //	}
 //	svg.add( Shape().EndGroup());
 
-	svg.add( Shape().IniGroup("IsocurvaRotada"));
+	svg.add( Shape().IniGroup("IsocurvasRotadas"));
 	for(int k=0; k<isovel.size(); k++ ){
 		for(const vector<Coord>& vs: isovel[k].iso ){
 			for(int i=0; i<vs.size()-1; i+=2){
@@ -1748,15 +1748,28 @@ void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vma
 	double colorBarWidth=1.0*image_width/40.0;
 	double colorBarHeight=3.0*image_height/4.0;
 
+	double lonRot=iniSlip_lon;
+	double latRot=iniSlip_lat;
 
+	svg.add( Shape().IniGroup("IsocurvasRotadas"));
 	for(int k=0; k<isovel.size(); k++ ){
 		for(const vector<Coord>& vs: isovel[k].iso ){
 			for(int i=0; i<vs.size()-1; i+=2){
-				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
+				double lon1=vs[i].lon;
+				double lat1=vs[i].lat;
+				double lon2=vs[i+1].lon;
+				double lat2=vs[i+1].lat;
+
+				rot(theta,lonRot, latRot, lon1, lat1);
+				rot(theta,lonRot, latRot, lon2, lat2);
+				svg.add( Shape().Line( T().x(lon1), T().y(lat1), T().x(lon2), T().y(lat2) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
+//				svg.add( Shape().Line( T().x(vs[i].lon), T().y(vs[i].lat), T().x(vs[i+1].lon), T().y(vs[i+1].lat) ).stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
 			}
 		}
 	}
+	svg.add( Shape().EndGroup());
 
+	svg.add( Shape().IniGroup("IsocurvasMMI"));
 	for(int i=1; i<vRadio.size() && vRadio[i]>0; i++ ){
 		double lon = epi_lon;
 		double lat = epi_lat;
@@ -1786,6 +1799,7 @@ void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vma
 		svg.add( Shape().Text( x+dlabel*cos(alpha), y-dlabel*sin(alpha), label )
 				 .align("middle").fontSize(0.2*T().textHeight).fontFamily("Times") );
 	}
+	svg.add( Shape().EndGroup());
 
 	svg.add(Shape().ColorBar(colorBarX, colorBarY,
 							 colorBarWidth, colorBarHeight,"ColorMap2",
