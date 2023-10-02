@@ -320,17 +320,39 @@ Coord interpola(double alpha, double beta, Coord a, Coord b, Coord c, Coord d){
 	return ab+beta*(dc-ab);
 }
 //agregando función readSlip
+
+struct pointSlip{
+public:
+	Coord coord;
+	double slip;
+	pointSlip(Coord coord, double slip){
+		this->coord=coord;
+		this->slip=slip;
+	}
+
+	pointSlip(){
+		this->coord=Coord(0,0);
+		this->slip=0.0;
+	}
+
+	pointSlip(const pointSlip& ps){
+		this->coord=ps.coord;
+		this->slip=ps.slip;
+	}
+};
+
 struct dataSlip{
 	int Nx;
 	int Nz;
 	double LAT;
 	double LON;
 	double STRK;
+	vector< vector< pointSlip > > data;
 };
 
-dataSlip ReadSlip(vector< vector< pair<Coord,float> > > &coordInvSlip, string filename="complete_inversion.fsp"){
+void ReadSlip(dataSlip &slip, string filename="complete_inversion.fsp"){
 	ifstream inFile;
-	dataSlip data;
+	//dataSlip data;
 	inFile.open(filename, std::ifstream::in);
 	if (inFile.is_open()){
 		cout<<"Abriendo complete_inversion.fsp"<<endl;
@@ -339,11 +361,11 @@ dataSlip ReadSlip(vector< vector< pair<Coord,float> > > &coordInvSlip, string fi
 		double LAT_centro, LON_centro, STRK;
 		if( Ext.get("Nx",Nx) && Ext.get("Nz",Nz) && Ext.get("LAT",LAT_centro) && Ext.get("LON",LON_centro)  && Ext.get("STRK",STRK)){
 			cout<<"Nx:"<<Nx<<" Nz:"<<Nz<<" LAT:"<<LAT_centro<<" LON:"<<LON_centro<<endl;
-			data.Nx=Nx;
-			data.Nz=Nz;
-			data.LAT=LAT_centro;
-			data.LON=LON_centro;
-			data.STRK=STRK;
+			slip.Nx=Nx;
+			slip.Nz=Nz;
+			slip.LAT=LAT_centro;
+			slip.LON=LON_centro;
+			slip.STRK=STRK;
 			float LAT,LON,X,Y,Z,SLIP,RAKE,TRUP,RISE,SF_MOMENT;
 			float max=-std::numeric_limits<float>::max();
 			float min=std::numeric_limits<float>::max();
@@ -351,9 +373,9 @@ dataSlip ReadSlip(vector< vector< pair<Coord,float> > > &coordInvSlip, string fi
 			int i=0,j=0;
 			int k=0;
 			//vector< vector< pair<Coord,float> > > coordInvSlip(Nz);
-			coordInvSlip.resize(Nz);
+			slip.data.resize(Nz);
 			for( int j=0; j<Nz; j++){
-				vector< pair<Coord,float> > row(Nx);
+				vector< pointSlip > row(Nx);
 				for( int i=0; i<Nx; i++){
 					string line;
 					getline(inFile,line);
@@ -361,38 +383,42 @@ dataSlip ReadSlip(vector< vector< pair<Coord,float> > > &coordInvSlip, string fi
 					if(! (ssline>>LAT>>LON>>X>>Y>>Z>>SLIP>>RAKE>>TRUP>>RISE>>SF_MOMENT) ){
 						cout<<"Se esperaba un parámetro más en la lectura"<<endl;
 					}
-					row[i]=pair<Coord, float>( Coord( LON, LAT ), SLIP );
+					//row[i]=pair<Coord, float>( Coord( LON, LAT ), SLIP );
+					row[i]=pointSlip(Coord( LON, LAT ), SLIP);
 				}
-				coordInvSlip[j]=row;
+				slip.data[j]=row;
 			}
 		}
 	}else{
 		cout<<"No se encontro el archivo: complete_inversion.fsp"<<endl;
 	}
 
-	return data;
+	//return data;
 }
 
-void slip2(SVG2D &svg, vector< vector< pair<Coord,float> > > coordInvSlip, bool addColor=true){
+
+
+//void slip2(SVG2D &svg, vector< vector< pair<Coord,float> > > coordInvSlip, bool addColor=true){
+void addSlip2SVG(SVG2D &svg, dataSlip slip, bool addColor=true){
 	float strokeWidth=0.005*T().textHeight;
 	int J1, J2, J3, J4;
 	int I1, I2, I3, I4;
 	double beta1, beta2, beta3, beta4;
 	double alpha1, alpha2, alpha3, alpha4;
-	cout<<"coordInvSlip.size()"<<coordInvSlip.size()<<endl;
+	cout<<"coordInvSlip.size()"<<slip.data.size()<<endl;
 	svg.add( Shape().IniGroup("Slip"));
-	for(int j=0; j<coordInvSlip.size(); j++ ){
+	for(int j=0; j<slip.data.size(); j++ ){
 		J1=J2=J3=J4=j;
 		beta1=beta2=beta3=beta4=0.5;
 		if(j==0){
 			J1=J2=j+1;
 			beta1=beta2=-0.5;
 		}
-		if(j==coordInvSlip.size()-1){
+		if(j==slip.data.size()-1){
 			J3=J4=j-1;
 			beta3=beta4=1.5;
 		}
-		for(int i=0; i<coordInvSlip[j].size(); i++ ){
+		for(int i=0; i<slip.data[j].size(); i++ ){
 			vector<float> p;
 			I1=I2=I3=I4=i;
 			alpha1=alpha2=alpha3=alpha4=0.5;
@@ -400,21 +426,25 @@ void slip2(SVG2D &svg, vector< vector< pair<Coord,float> > > coordInvSlip, bool 
 				I1=I4=i+1;
 				alpha1=alpha4=-0.5;
 			}
-			if(i==coordInvSlip[j].size()-1){
+			if(i==slip.data[j].size()-1){
 				I2=I3=i-1;
 				alpha2=alpha3=1.5;
 			}
 
-			Coord p1=interpola(alpha1,beta1,coordInvSlip[J1-1][I1-1].first,coordInvSlip[J1-1][I1].first,coordInvSlip[J1][I1].first,coordInvSlip[J1][I1-1].first);
-			Coord p2=interpola(alpha2,beta2,coordInvSlip[J2-1][I2].first,coordInvSlip[J2-1][I2+1].first,coordInvSlip[J2][I2+1].first,coordInvSlip[J2][I2].first);
-			Coord p3=interpola(alpha3,beta3,coordInvSlip[J3][I3].first,coordInvSlip[J3][I3+1].first,coordInvSlip[J3+1][I3+1].first,coordInvSlip[J3+1][I3].first);
-			Coord p4=interpola(alpha4,beta4,coordInvSlip[J4][I4-1].first,coordInvSlip[J4][I4].first,coordInvSlip[J4+1][I4].first,coordInvSlip[J4+1][I4-1].first);
+			Coord p1=interpola(alpha1,beta1,slip.data[J1-1][I1-1].coord,slip.data[J1-1][I1].coord,slip.data[J1][I1].coord,slip.data[J1][I1-1].coord);
+			Coord p2=interpola(alpha2,beta2,slip.data[J2-1][I2].coord,slip.data[J2-1][I2+1].coord,slip.data[J2][I2+1].coord,slip.data[J2][I2].coord);
+			Coord p3=interpola(alpha3,beta3,slip.data[J3][I3].coord,slip.data[J3][I3+1].coord,slip.data[J3+1][I3+1].coord,slip.data[J3+1][I3].coord);
+			Coord p4=interpola(alpha4,beta4,slip.data[J4][I4-1].coord,slip.data[J4][I4].coord,slip.data[J4+1][I4].coord,slip.data[J4+1][I4-1].coord);
+//			p.push_back( svg.T2.x(p1.lon) );p.push_back( svg.T2.y(p1.lat) );
+//			p.push_back( svg.T2.x(p2.lon) );p.push_back( svg.T2.y(p2.lat) );
+//			p.push_back( svg.T2.x(p3.lon) );p.push_back( svg.T2.y(p3.lat) );
+//			p.push_back( svg.T2.x(p4.lon) );p.push_back( svg.T2.y(p4.lat) );
 			p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
 			p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
 			p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
 			p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
 			uint8_t r, g, b;
-			double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
+			double f = (slip.data[j][i].slip -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
 			colorMap3.getColor(f, r, g, b);
 			if( addColor ){
 				svg.add( Shape().Polygon(p)
@@ -431,95 +461,6 @@ void slip2(SVG2D &svg, vector< vector< pair<Coord,float> > > coordInvSlip, bool 
 	svg.add( Shape().EndGroup());
 }
 
-void slip(SVG2D &svg,bool addColor=true, string filename="complete_inversion.fsp"){
-	ifstream inFile;
-	inFile.open(filename, std::ifstream::in);
-	if (inFile.is_open()){
-		ReadCompleteInversion Ext(inFile);
-		int Nx,Nz;
-		if( Ext.get("Nx",Nx) && Ext.get("Nz",Nz) ){
-			cout<<"Nx:"<<Nx<<" Nz:"<<Nz<<endl;
-			float LAT,LON,X,Y,Z,SLIP,RAKE,TRUP,RISE,SF_MOMENT;
-			float max=-std::numeric_limits<float>::max();
-			float min=std::numeric_limits<float>::max();
-			vector<float> u(Nx*Nz);
-			int i=0,j=0;
-			int k=0;
-			vector< vector< pair<Coord,float> > > coordInvSlip(Nz);
-			for( int j=0; j<Nz; j++){
-				vector< pair<Coord,float> > row(Nx);
-				for( int i=0; i<Nx; i++){
-					string line;
-					getline(inFile,line);
-					stringstream ssline(line);
-					if(! (ssline>>LAT>>LON>>X>>Y>>Z>>SLIP>>RAKE>>TRUP>>RISE>>SF_MOMENT) ){
-						cout<<"Se esperaba un parámetro más en la lectura"<<endl;
-					}
-					row[i]=pair<Coord, float>( Coord( LON, LAT ), SLIP );
-				}
-				coordInvSlip[j]=row;
-			}
-//			for(const auto& row: coordInvSlip){
-//				for(const auto& col: row){
-//					cout<<"Coord:"<<col.first.lon<<", "<<col.first.lat<<" ,"<<col.second<<endl;
-//				}
-//			}
-			float strokeWidth=0.005*T().textHeight;
-			int J1, J2, J3, J4;
-			int I1, I2, I3, I4;
-			double beta1, beta2, beta3, beta4;
-			double alpha1, alpha2, alpha3, alpha4;
-			for(int j=0; j<coordInvSlip.size(); j++ ){
-				J1=J2=J3=J4=j;
-				beta1=beta2=beta3=beta4=0.5;
-				if(j==0){
-					J1=J2=j+1;
-					beta1=beta2=-0.5;
-				}
-				if(j==coordInvSlip.size()-1){
-					J3=J4=j-1;
-					beta3=beta4=1.5;
-				}
-				for(int i=0; i<coordInvSlip[j].size(); i++ ){
-					vector<float> p;
-					I1=I2=I3=I4=i;
-					alpha1=alpha2=alpha3=alpha4=0.5;
-					if(i==0){
-						I1=I4=i+1;
-						alpha1=alpha4=-0.5;
-					}
-					if(i==coordInvSlip[j].size()-1){
-						I2=I3=i-1;
-						alpha2=alpha3=1.5;
-					}
-
-					Coord p1=interpola(alpha1,beta1,coordInvSlip[J1-1][I1-1].first,coordInvSlip[J1-1][I1].first,coordInvSlip[J1][I1].first,coordInvSlip[J1][I1-1].first);
-					Coord p2=interpola(alpha2,beta2,coordInvSlip[J2-1][I2].first,coordInvSlip[J2-1][I2+1].first,coordInvSlip[J2][I2+1].first,coordInvSlip[J2][I2].first);
-					Coord p3=interpola(alpha3,beta3,coordInvSlip[J3][I3].first,coordInvSlip[J3][I3+1].first,coordInvSlip[J3+1][I3+1].first,coordInvSlip[J3+1][I3].first);
-					Coord p4=interpola(alpha4,beta4,coordInvSlip[J4][I4-1].first,coordInvSlip[J4][I4].first,coordInvSlip[J4+1][I4].first,coordInvSlip[J4+1][I4-1].first);
-					p.push_back( T().x(p1.lon) );p.push_back( T().y(p1.lat) );
-					p.push_back( T().x(p2.lon) );p.push_back( T().y(p2.lat) );
-					p.push_back( T().x(p3.lon) );p.push_back( T().y(p3.lat) );
-					p.push_back( T().x(p4.lon) );p.push_back( T().y(p4.lat) );
-					uint8_t r, g, b;
-					double f = (coordInvSlip[j][i].second -nsSlip->niceMin)/(nsSlip->niceMax-nsSlip->niceMin);
-					colorMap3.getColor(f, r, g, b);
-					if( addColor ){
-						svg.add( Shape().Polygon(p)
-						.fill( (int)r, (int)g, (int)b ).fillOpacity(0.5)
-						.stroke(0,0,0).strokeWidth(strokeWidth) );
-					}else{
-						svg.add( Shape().Polygon(p)
-						.fillNone()
-						.stroke(0,0,0).strokeWidth(strokeWidth) );
-					}
-				}
-			}
-		}
-	}else{
-		cout<<"No se encontro el archivo: complete_inversion.fsp"<<endl;
-	}
-}
 
 //struct scells{
 //	Color color;
@@ -815,7 +756,10 @@ void transformation_settings_( double DH, int NXSC, int NYSC, int LX, int LY){
 		north=yc+lambda*dmax;
 	}
 
+	cout<<"**************************"<<endl;
+	cout<<"image_width="<<image_width<<" image_height="<<image_height<<endl;
 	cout<<"west="<<west<<" east="<<east<<endl;
+	cout<<"south="<<south<<" north="<<north<<endl;
 
 	T( image_width, image_height,
 	   west,east,south,north);
@@ -882,7 +826,7 @@ void holes_(int *nbhx, int *nbhy, int *nholes){
 
 
 //void make_svg_(int *ntst, double *dt, int *nbgxs, int *nedxs, int *nbgys, int *nedys, int *nbgzs, int *nedzs, int *size,int *layerGlobal){
-void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vmax){
+void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vmax, dataSlip slip){
 
 	//int NTST=*ntst;
 	//double DT=*dt;
@@ -906,12 +850,14 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	int image_width=T().width;
 	int image_height=T().height;
 
-	vector< vector< pair<Coord,float> > > coordInvSlip;
-	dataSlip dSlip=ReadSlip(coordInvSlip);
+	//vector< vector< pair<Coord,float> > > coordInvSlip;
+	//dataSlip dSlip=ReadSlip(coordInvSlip);
 
 
 	//SVG2D svg(nameSVG_Z.str(),image_width,image_height);
 	SVG2D svg(nameSVG,image_width,image_height);
+	Transform2 T2( image_width, image_height, -115.0, -70.0, -3, 33.0);
+	svg.setTransform(T2);
 	svg.add(Shape().ColorMap(colorMap1,"ColorMap"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
@@ -931,12 +877,13 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 	double maxSlip=-std::numeric_limits<double>::max();
 	double maxSlipLAT;
 	double maxSlipLON;
-	for (const auto& row : coordInvSlip){
+	//for (const auto& row : coordInvSlip){
+	for (const auto& row : slip.data){
 		for (const auto& p : row){
-			if(maxSlip<=p.second){
-				maxSlip=p.second;
-				maxSlipLAT=p.first.lat;
-				maxSlipLON=p.first.lon;
+			if(maxSlip<=p.slip){
+				maxSlip=p.slip;
+				maxSlipLAT=p.coord.lat;
+				maxSlipLON=p.coord.lon;
 			}
 		}
 	}
@@ -976,7 +923,7 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 	//slip(svg);
 
-	slip2(svg, coordInvSlip);
+	addSlip2SVG(svg, slip);
 
 	//svg.add(Shape().Image(Tx,Ty,Tdx,Tdy,namePNG,epi_x,epi_y,-22));
 
@@ -1273,13 +1220,16 @@ void make_svg_(int NTST, string nameSVG, string namePNG, double vmin, double vma
 
 
 
-void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
+void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax, dataSlip slip){
 
 	int image_width=T().width;
 	int image_height=T().height;
 
-	vector< vector< pair<Coord,float> > > coordInvSlip;
-	dataSlip dSlip=ReadSlip(coordInvSlip);
+	//vector< vector< pair<Coord,float> > > coordInvSlip;
+	//dataSlip dSlip=ReadSlip(coordInvSlip);
+//	dataSlip slip;
+//	ReadSlip(slip);
+
 
 	SVG2D svg(nameSVG,image_width,image_height);
 	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
@@ -1300,12 +1250,12 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 	double maxSlip=-std::numeric_limits<double>::max();
 	double maxSlipLAT;
 	double maxSlipLON;
-	for (const auto& row : coordInvSlip){
+	for (const auto& row : slip.data){
 		for (const auto& p : row){
-			if(maxSlip<=p.second){
-				maxSlip=p.second;
-				maxSlipLAT=p.first.lat;
-				maxSlipLON=p.first.lon;
+			if(maxSlip<=p.slip){
+				maxSlip=p.slip;
+				maxSlipLAT=p.coord.lat;
+				maxSlipLON=p.coord.lon;
 			}
 		}
 	}
@@ -1341,7 +1291,10 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 	//slip(svg);
 //	vector< vector< pair<Coord,float> > > coordInvSlip;
 //	ReadSlip(coordInvSlip);
-	slip2(svg, coordInvSlip);
+	//slip2(svg, coordInvSlip);
+	addSlip2SVG(svg, slip);
+
+
 
 
 
@@ -1478,13 +1431,15 @@ void make_svg_max(string nameSVG, string namePNG, double vmin, double vmax){
 }
 
 
-void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio){
+void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio, dataSlip slip){
 
 	int image_width=T().width;
 	int image_height=T().height;
 
-	vector< vector< pair<Coord,float> > > coordInvSlip;
-	dataSlip dSlip=ReadSlip(coordInvSlip);
+//	vector< vector< pair<Coord,float> > > coordInvSlip;
+//	dataSlip dSlip=ReadSlip(coordInvSlip);
+//	dataSlip slip;
+//	ReadSlip(slip);
 
 	SVG2D svg(nameSVG,image_width,image_height);
 	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
@@ -1505,12 +1460,12 @@ void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio){
 	double maxSlip=-std::numeric_limits<double>::max();
 	double maxSlipLAT;
 	double maxSlipLON;
-	for (const auto& row : coordInvSlip){
+	for (const auto& row : slip.data){
 		for (const auto& p : row){
-			if(maxSlip<=p.second){
-				maxSlip=p.second;
-				maxSlipLAT=p.first.lat;
-				maxSlipLON=p.first.lon;
+			if(maxSlip<=p.slip){
+				maxSlip=p.slip;
+				maxSlipLAT=p.coord.lat;
+				maxSlipLON=p.coord.lon;
 			}
 		}
 	}
@@ -1533,7 +1488,9 @@ void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio){
 	double roty=T().y(iniSlip_lat)-Ty;
 
 	svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
-	slip2(svg, coordInvSlip);
+	addSlip2SVG(svg, slip);
+
+	//slip2(svg, coordInvSlip);
 
 
 	for(int i=1; i<vRadio.size() && vRadio[i]>0; i++ ){
@@ -1651,13 +1608,15 @@ void make_svg_mmi(string nameSVG, string namePNG, vector<double> &vRadio){
 
 
 
-void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vmax,  vector<double> &vRadio){
+void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vmax,  vector<double> &vRadio, dataSlip slip){
 
 	int image_width=T().width;
 	int image_height=T().height;
 
-	vector< vector< pair<Coord,float> > > coordInvSlip;
-	dataSlip dSlip=ReadSlip(coordInvSlip);
+//	vector< vector< pair<Coord,float> > > coordInvSlip;
+//	dataSlip dSlip=ReadSlip(coordInvSlip);
+//	dataSlip slip;
+//	ReadSlip(slip);
 
 	SVG2D svg(nameSVG,image_width,image_height);
 	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
@@ -1688,12 +1647,12 @@ void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vma
 	double maxSlip=-std::numeric_limits<double>::max();
 	double maxSlipLAT;
 	double maxSlipLON;
-	for (const auto& row : coordInvSlip){
+	for (const auto& row : slip.data){
 		for (const auto& p : row){
-			if(maxSlip<=p.second){
-				maxSlip=p.second;
-				maxSlipLAT=p.first.lat;
-				maxSlipLON=p.first.lon;
+			if(maxSlip<=p.slip){
+				maxSlip=p.slip;
+				maxSlipLAT=p.coord.lat;
+				maxSlipLON=p.coord.lon;
 			}
 		}
 	}
@@ -1723,7 +1682,8 @@ void make_svg_mmi_maxvel(string nameSVG, string namePNG, double vmin, double vma
 	//slip(svg);
 //	vector< vector< pair<Coord,float> > > coordInvSlip;
 //	ReadSlip(coordInvSlip);
-	slip2(svg, coordInvSlip);
+	//slip2(svg, coordInvSlip);
+	addSlip2SVG(svg, slip);
 
 
 
@@ -1970,9 +1930,13 @@ int main(int argc, char *argv[])
 	infoData.show();
 
 	initialize_visualization_(cdat.path);
-	vector< vector< pair<Coord,float> > > coordInvSlip;
-	dataSlip dSlip=ReadSlip(coordInvSlip);
-	theta=270.0-dSlip.STRK;
+	//vector< vector< pair<Coord,float> > > coordInvSlip;
+	//dataSlip dSlip=ReadSlip(coordInvSlip);
+//	theta=270.0-dSlip.STRK;
+	dataSlip slip;
+	ReadSlip(slip);
+	theta=270.0-slip.STRK;
+
 
 #if defined DEBUG
 	cout<<"DH="<<infoData.DH()<<endl;
@@ -2477,7 +2441,7 @@ int main(int argc, char *argv[])
 					pngoutZ.write(lineZ.data(), static_cast<size_t>(SX));
 				}
 
-				make_svg_(timeIndex,"./imagenes/"+nameSVG_Z.str(),"./Z/"+namePNG_Z.str(),VELXMIN,VELXMAX);
+				make_svg_(timeIndex,"./imagenes/"+nameSVG_Z.str(),"./Z/"+namePNG_Z.str(),VELXMIN,VELXMAX, slip);
 
 			}
 
@@ -2498,22 +2462,9 @@ int main(int argc, char *argv[])
 		ofstream output_file_bin("./velMax_bin.dat", ios::out | ios::binary);
 		output_file_bin.write( (char*)&valmax2.data.at(0) , valmax2.data.size() * sizeof(float));
 		output_file_bin.close();
-		//	velMaxZ=0.002;
 	}
 	else{
-
-//		cout<<"leyendo vmax"<<endl;
-//		ifstream input_file_bin("./velMax_bin.dat", ios::binary);
-//		cout<<"copiando vmax"<<endl;
-//		std::copy(std::istream_iterator<char>(input_file_bin),
-//				  std::istream_iterator<char>(),
-//				  std::back_inserter(valmax2.data));
-
-//		valmax2.data.insert(valmax2.data.begin(),
-//							std::istream_iterator<unsigned char>(input_file_bin),
-//							std::istream_iterator<unsigned char>());
 		valmax2.data=readFile("./velMax_bin.dat");
-
 	}
 
 
@@ -2529,132 +2480,6 @@ int main(int argc, char *argv[])
 
 	//NiceScale nsMax(0,velMaxZ);
 	NiceScale nsMax(0,valmax2.Max() );
-
-
-//	cout<<"velMinZ="<<velMinZ<<endl;
-//	cout<<"velMaxZ="<<velMaxZ<<endl;
-
-//	int CX=SX-1;
-//	int CY=SY-1;
-//	//vector<unsigned char> caseCorners( CX*CY,0 );
-//	//cout<<"**** xy(0,0)->"<<img.xy(0,0).lon<<" "<<img.xy(0,0).lat<<endl;
-//	//cout<<"**** xy(100,100)->"<<img.xy(100,100).lon<<" "<<img.xy(100,100).lat<<endl;
-
-//	NiceScale nsThresholdMax(0,velMaxZ,12);
-//	int N=nsThresholdMax.N();
-//	for ( int k=1; k<N-1; k++ ){
-//		float valThreshold=nsThresholdMax.niceMin + (float)k*nsThresholdMax.tickSpacing;
-//		//vector<float> valsThreshold{ 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050};
-//		//for ( auto valThreshold: valsThreshold ){
-//		vector< vector<Coord> > coords;
-//		for (int j = 0; j < CY; j++){
-//			for (int i = 0; i < CX; i++){
-//				int i0 = i + SX*j;
-//				int i1 = i+1 + SX*j;
-//				int i2 = i+1 + SX*(j+1);
-//				int i3 = i + SX*(j+1);
-//				unsigned char valKey=0;
-//				if( valmax[i0]>valThreshold )valKey|=0x01;
-//				if( valmax[i1]>valThreshold )valKey|=0x02;
-//				if( valmax[i2]>valThreshold )valKey|=0x04;
-//				if( valmax[i3]>valThreshold )valKey|=0x08;
-//				//			float v = valmax[index];
-//				//			if( velMaxZ < v ) velMaxZ = v;
-
-//				//cout<<hex<<(int)valKey<<" ";
-//				vector<Coord> line;
-//				float x,y,p;
-//				switch(valKey){
-//				case 1:
-//					//				cout<<"case1"<<endl;
-//					//				cout<<"i1="<<valmax[i1]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
-//					//				cout<<"i3="<<valmax[i3]<<" thr="<<valThreshold<<" i0="<<valmax[i0]<<endl;
-//				case 14:
-//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-//					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-//					line.push_back(img.xy(i+x,j));
-//					line.push_back(img.xy(i,j+y));
-//					break;
-//				case 2:
-//				case 13:
-//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-//					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-//					line.push_back(img.xy(i+x, j));
-//					line.push_back(img.xy(i+1, j+y));
-//					break;
-//				case 3:
-//				case 12:
-//					x=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-//					y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-//					line.push_back(img.xy(i,j+x));
-//					line.push_back(img.xy(i+1,j+y));
-//					break;
-//				case 4:
-//				case 11:
-//					x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-//					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-//					line.push_back(img.xy(i+1, j+x));
-//					line.push_back(img.xy(i+y, j+1));
-//					break;
-//				case 5:
-//				case 10:
-//					p=(valmax[i0]+valmax[i1]+valmax[i2]+valmax[i3])/4.0;
-//					if(fabs(valmax[i0]-p)+fabs(valmax[i2]-p)<fabs(valmax[i1]-p)+fabs(valmax[i3]-p)){
-//						//7 y 8
-//						x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-//						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-//						line.push_back(img.xy(i+x, j+1));
-//						line.push_back(img.xy(i, j+y));
-//						//2 y 13
-//						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-//						y=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-//						line.push_back(img.xy(i+x, j));
-//						line.push_back(img.xy(i+1, j+y));
-//					}
-//					else{
-//						//4 y 11
-//						x=(valThreshold-valmax[i1])/(valmax[i2]-valmax[i1]);
-//						y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-//						line.push_back(img.xy(i+1, j+x));
-//						line.push_back(img.xy(i+y, j+1));
-//						//1 y 14
-//						x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-//						y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-//						line.push_back(img.xy(i+x,j));
-//						line.push_back(img.xy(i,j+y));
-//					}
-//					break;
-//				case 6:
-//				case 9:
-//					x=(valThreshold-valmax[i0])/(valmax[i1]-valmax[i0]);
-//					y=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-//					line.push_back(img.xy(i+x, j));
-//					line.push_back(img.xy(i+y, j+1));
-//					break;
-//				case 7:
-//				case 8:
-//					x=(valThreshold-valmax[i3])/(valmax[i2]-valmax[i3]);
-//					y=(valThreshold-valmax[i0])/(valmax[i3]-valmax[i0]);
-//					line.push_back(img.xy(i+x, j+1));
-//					line.push_back(img.xy(i, j+y));
-//					break;
-//				}
-
-//				if( line.size()>0 ){
-//					//cout<<"size line"<<line.size()<<endl;
-//					coords.push_back(line);
-//				}
-//			}
-//			//cout<<endl;
-//		}
-//		Color _color;
-//		double f = (valThreshold-nsThresholdMax.niceMin)/(nsThresholdMax.niceMax-nsThresholdMax.niceMin);
-//		colorMap2.getColor(f, _color.r, _color.g, _color.b);
-//		cout << "valThreshold=" << valThreshold << " Color (" << (int)_color.r << ", " << (int)_color.g << ", " << (int)_color.b << ")" << endl;
-//		color.push_back(_color);
-//		isovel.push_back(coords);
-//	}
-
 
 	//	(0,SY-1)...(SX-1,SY-1)
 	//	  .             .
@@ -2672,12 +2497,12 @@ int main(int argc, char *argv[])
 	double maxSlip=-std::numeric_limits<double>::max();
 	double maxSlipLAT;
 	double maxSlipLON;
-	for (const auto& row : coordInvSlip){
+	for (const auto& row : slip.data){
 		for (const auto& p : row){
-			if(maxSlip<=p.second){
-				maxSlip=p.second;
-				maxSlipLAT=p.first.lat;
-				maxSlipLON=p.first.lon;
+			if(maxSlip<=p.slip){
+				maxSlip=p.slip;
+				maxSlipLAT=p.coord.lat;
+				maxSlipLON=p.coord.lon;
 			}
 		}
 	}
@@ -2761,7 +2586,7 @@ int main(int argc, char *argv[])
 		//cout<<endl;
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
-	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max());
+	make_svg_max("./imagenes/"+nameSVG_MaxZ.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max(), slip);
 
 	//Oaxaca eq 2 group 1
 	//double Ms=7.3;
@@ -2845,14 +2670,14 @@ int main(int argc, char *argv[])
 			vRadio.push_back(Df);
 		}
 
-		make_svg_mmi("./imagenes/"+nameSVG_MMI.str(),"./"+namePNG_MMI.str(),vRadio);
+		make_svg_mmi("./imagenes/"+nameSVG_MMI.str(),"./"+namePNG_MMI.str(),vRadio, slip);
 
 		stringstream namePNG_MMI_MaxVel,nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
 		nameRoot_MMI_MaxVel<<nFilePrefix<<"-MMI_MaxVel";
 		namePNG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".png";
 		nameSVG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".svg";
 		cout<<namePNG_MMI_MaxVel.str()<<endl;
-		make_svg_mmi_maxvel("./imagenes/"+nameSVG_MMI_MaxVel.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max(),vRadio);
+		make_svg_mmi_maxvel("./imagenes/"+nameSVG_MMI_MaxVel.str(),"./"+namePNG_MaxZ.str(), 0,valmax2.Max(),vRadio, slip);
 	}
 
 
