@@ -13,6 +13,8 @@ double Transform::b_x = 0.0;
 double Transform::m_y = 0.0;
 double Transform::b_y = 0.0;
 
+double latlon2m=111320.0;
+
 void rot(const double angle,const double cx, const double cy, double& px, double& py){
     double theta=angle*M_PI/180.0;
     double x=px-cx;

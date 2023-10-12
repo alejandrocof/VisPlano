@@ -8,10 +8,13 @@
 #include <iomanip>
 #include <cmath>
 
+#include "NiceScale.hpp"
+
 using namespace std;
 
 //https://en.wikibooks.org/wiki/More_C++_Idioms/Named_Constructor
 //https://isocpp.org/wiki/faq/ctors#named-parameter-idiom
+
 
 
 
@@ -105,19 +108,23 @@ class Transform2{
 public:
   Transform2(const double _width, const double _height,
 			const double _west,  const double _east,
-			const double _south, const double _north){
-			width=_width;
-			height=_height;
-			west=_west;
-			east=_east;
-			south=_south;
-			north=_north;
-			textHeight=height/40.0;
-			pointHeight=height/160.0;
-			m_x=_width/(_east-_west);
-			b_x=-_west*_width/(_east-_west);
-			m_y= _height/(_north-_south);
-			b_y= _north*_height/(_north-_south);
+			const double _south, const double _north,
+			 NiceScale ns_lat, NiceScale we_long ){
+	  this->width=_width;
+	  this->height=_height;
+	  this->west=_west;
+	  this->east=_east;
+	  this->south=_south;
+	  this->north=_north;
+	  this->textHeight=this->height/40.0;
+	  this->pointHeight=this->height/160.0;
+	  this->m_x=_width/(_east-_west);
+	  this->b_x=-_west*_width/(_east-_west);
+	  this->m_y= _height/(_north-_south);
+	  this->b_y= _north*_height/(_north-_south);
+	  this->ns_lat=ns_lat;
+	  this->we_long=we_long;
+	  cout<<"Transform2:"<<this->width<<" x "<<this->height<<endl;
 		  }
 
   Transform2(){}
@@ -132,6 +139,9 @@ public:
 
   double m_x,b_x;
   double m_y,b_y;
+
+  NiceScale ns_lat;
+  NiceScale we_long;
 
   double x(const double _x);
   double y(const double _y);

@@ -27,7 +27,7 @@ public:
     int NGX(){return ng[_X];};
     int NGY(){return ng[_Y];};
     int NGZ(){return ng[_Z];};
-    int SX(){return st(_X);};
+	int SX(){return st(_X);};
     int SY(){return st(_Y);};
     int SZ(){return st(_Z);};
     int SXi(int i){return s(i,_X);};

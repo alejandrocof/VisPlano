@@ -13,6 +13,7 @@ ostream& operator << (ostream &o,const Shape& tex){
     case ShapeName::Path:
     case ShapeName::Text:
     case ShapeName::Image:
+	case ShapeName::CenteredImage:
     case ShapeName::ColorMap:
     case ShapeName::ColorBar:
     case ShapeName::Point:

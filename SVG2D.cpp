@@ -6,6 +6,14 @@ SVG2D::SVG2D(const string& name, const int& width, const int& height, const stri
 	file << "<svg id='"<<id<<"' width='"<<width<<"' height='"<<height<<"' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>"<<endl;
 }
 
+SVG2D::SVG2D(Transform2 &TXY, const string& name, const string& id) : nameFile{name}{
+	this->TXY=&TXY;
+	file.open(nameFile);
+	file << "<?xml version='1.0' encoding='UTF-8' standalone='no'?>"<<endl;
+	file << "<svg id='"<<id<<"' width='"<<this->TXY->width<<"' height='"<<this->TXY->height<<"' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>"<<endl;
+}
+
+
 SVG2D::~SVG2D(){
 	file << "</svg>"<<endl;
 	file.close();

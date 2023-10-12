@@ -21,6 +21,8 @@ class NiceScale
     * @param min the minimum data point on the axis
     * @param max the maximum data point on the axis
     */
+	NiceScale(){}
+
     NiceScale(double min, double max, int ticks=6){
       maxTicks = ticks;
       minPoint = min;

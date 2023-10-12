@@ -16,7 +16,7 @@
 using namespace std;
 
 enum class ShapeName{IniGroup,EndGroup,Rectangle,Circle,Ellipse,Line,Polyline,Polygon,Path,Text,
-					 LinearGradient,Image,ColorMap,ColorBar,Point,Mesh,ShapeFile,Use, Mask, MaskRaw};
+					 LinearGradient,Image,CenteredImage,ColorMap,ColorBar,Point,Mesh,ShapeFile,Use, Mask, MaskRaw};
 
 
 class Shape{
@@ -123,6 +123,28 @@ public:
 		return *this;
 	}
 
+	Shape& CenteredImage(const float& cx, const float& cy, const float& width, const float& height, const string& name, const float& angle=0.0){
+		clear();
+		head<<"<image xlink:href='"<< name<<"'";
+		head<<" x='"<< cx-width/2.0 <<"' y='"<< cy-height/2.0<<"'";
+		head<<" width='"<< width <<"' height='"<< height <<"'";
+		head<<" transform='rotate("<< -angle <<","<< cx <<","<< cy <<")'";
+		tail<<"/>"<<endl;
+		_shp=ShapeName::CenteredImage;
+		return *this;
+	}
+
+//	Shape& Image(const float& cx, const float& cy, const float& width, const float& height, const string& name, const float& angle=0.0){
+//		clear();
+//		head<<"<image xlink:href='"<< name<<"'";
+//		head<<" x='"<< cx-width/2.0 <<"' y='"<< cy-height/2.0<<"'";
+//		head<<" width='"<< width <<"' height='"<< height <<"'";
+//		head<<" transform='rotate("<< -angle <<","<< cx <<","<< cy <<")'";
+//		tail<<"/>"<<endl;
+//		_shp=ShapeName::CenteredImage;
+//		return *this;
+//	}
+
 	Shape& ColorMap(const lut& colorMap, const string& name){
 		clear();
 		head<<"<defs>"<<endl;
@@ -141,18 +163,18 @@ public:
 		return *this;
 	}
 
-	Shape& ColorBar(const float& x, const float& y, const float& width, const float& height,const string& name, const float& min, const float& max, const string& title , const int & ticks=6){
+	Shape& ColorBar(const float& x, const float& y, const float& width, const float& height,const string& name, NiceScale nscale, const string& title){
 		clear();
 		head << "<rect x='" << x << "' y='" << y;
 		head << "' width='"<< width <<"' height='"<<  height;
 		head <<"' fill='url(#" << name << ")' />"<<endl;
 
-		NiceScale ns(min,max, ticks);
-		int N=ns.N();
+		//NiceScale ns(min,max, ticks);
+		int N=nscale.N();
 		for(int iVal=0;iVal<N;iVal++){
 			body << "<text x='" << x+width << "' y='" << (y + (1.0 - (float)iVal/(N-1))*height) <<"'";
 			body << " fill='black' font-family='Times' font-size='"<<0.25*height<<"%'";
-			body << " text-anchor='start' dy='.3em'>" << fixed << setprecision( ns.decimals() ) << std::setfill( '0' ) << ns.niceMin + (float)iVal*ns.tickSpacing << "</text>" << endl;
+			body << " text-anchor='start' dy='.3em'>" << fixed << setprecision( nscale.decimals() ) << std::setfill( '0' ) << nscale.niceMin + (float)iVal*nscale.tickSpacing << "</text>" << endl;
 		}
 		body<<"<text x='" << x << "' y='" << y + 0.5*height <<"'";
 		body<<" fill='black' font-family='Times' font-size='"<<0.25*height<<"%'";
@@ -165,21 +187,20 @@ public:
 		return *this;
 	}
 
-	Shape& Mesh(const float& _west, const float& _east,
-				const float& _south, const float& _north){
+	Shape& Mesh(Transform2 &TXY){
 		clear();
 		head << "";
-		NiceScale ns_lat(_south,_north,12);
-		NiceScale we_long(_west,_east,12);
+		//NiceScale ns_lat(_south,_north,12);
+		//NiceScale we_long(_west,_east,12);
 
-		int N=ns_lat.N();
-		float x1=T().x(we_long.niceMin);
-		float x2=T().x(we_long.niceMax);
+		int N=TXY.ns_lat.N();
+		float x1=TXY.x(TXY.we_long.niceMin);
+		float x2=TXY.x(TXY.we_long.niceMax);
 		//float height=T().sy(ns_lat.niceMax-ns_lat.niceMin)/(5.0*N);
-		float height=T().textHeight;
+		float height=TXY.textHeight;
 		for(int iVal=0;iVal<N;iVal++){
 			//float y=T().y(ns_lat.niceMin + (1.0 - (float)iVal/(N-1))*(ns_lat.niceMax-ns_lat.niceMin));
-			float y=T().y(ns_lat.niceMin + (double)iVal*ns_lat.tickSpacing);
+			float y=TXY.y(TXY.ns_lat.niceMin + (double)iVal*TXY.ns_lat.tickSpacing);
 			body << "<line";
 			body << " x1='" << x1 <<"'";
 			body << " y1='" << y  <<"'";
@@ -189,19 +210,19 @@ public:
 		}
 		for(int iVal=0;iVal<N;iVal++){
 			//float y=T().y(ns_lat.niceMin + (ns_lat.niceMax-ns_lat.niceMin)*(float)iVal/(N-1));
-			float lat=ns_lat.niceMin + (double)iVal*ns_lat.tickSpacing;
-			float y=T().y(lat);
+			float lat=TXY.ns_lat.niceMin + (double)iVal*TXY.ns_lat.tickSpacing;
+			float y=TXY.y(lat);
 			body << "<text x='" << x1-0.5*height << "' y='" << y <<"'";
 			body << " fill='black' font-family='Times' font-size='"<<0.75*height<<"'";
 			//body << " text-anchor='end' dy='.3em'>" << fixed << setprecision( ns_lat.decimals() ) << std::setfill( '0' ) << ns_lat.niceMin + (float)iVal*ns_lat.tickSpacing << "</text>" << endl;
-			body << " text-anchor='end' dy='.3em'>" << fixed << setprecision( ns_lat.decimals() ) << std::setfill( '0' ) << lat << "</text>" << endl;
+			body << " text-anchor='end' dy='.3em'>" << fixed << setprecision( TXY.ns_lat.decimals() ) << std::setfill( '0' ) << lat << "</text>" << endl;
 		}
-		N=we_long.N();
-		float y1=T().y(ns_lat.niceMin);
-		float y2=T().y(ns_lat.niceMax);
+		N=TXY.we_long.N();
+		float y1=TXY.y(TXY.ns_lat.niceMin);
+		float y2=TXY.y(TXY.ns_lat.niceMax);
 		for(int iVal=0;iVal<N;iVal++){
 			//float x=T().x(we_long.niceMin + (1.0 - (float)iVal/(N-1))*(we_long.niceMax-we_long.niceMin));
-			float x=T().x(we_long.niceMin + (double)iVal*we_long.tickSpacing);
+			float x=TXY.x(TXY.we_long.niceMin + (double)iVal*TXY.we_long.tickSpacing);
 			body << "<line";
 			body << " x1='" << x<<"'";
 			body << " y1='" << y1 <<"'";
@@ -211,22 +232,22 @@ public:
 		}
 		for(int iVal=0;iVal<N;iVal++){
 			//float x=T().x(we_long.niceMin + (we_long.niceMax-we_long.niceMin)*(float)iVal/(N-1));
-			float lon=we_long.niceMin + (double)iVal*we_long.tickSpacing;
-			float x=T().x(lon);
+			float lon=TXY.we_long.niceMin + (double)iVal*TXY.we_long.tickSpacing;
+			float x=TXY.x(lon);
 			body << "<text x='" << x << "' y='" << y1-0.5*height <<"'";
 			body << " fill='black' font-family='Times' font-size='"<<0.75*height<<"'";
 			//body << " text-anchor='middle' dy='1.5em'>" << fixed << setprecision( we_long.decimals() ) << std::setfill( '0' ) << we_long.niceMin + (float)iVal*we_long.tickSpacing << "</text>" << endl;
-			body << " text-anchor='middle' dy='1.5em'>" << fixed << setprecision( we_long.decimals() ) << std::setfill( '0' ) << lon << "</text>" << endl;
+			body << " text-anchor='middle' dy='1.5em'>" << fixed << setprecision( TXY.we_long.decimals() ) << std::setfill( '0' ) << lon << "</text>" << endl;
 		}
 
-		float x=T().x(0.5*(we_long.niceMin + we_long.niceMax));
-		float y=T().y(ns_lat.niceMin);
+		float x=TXY.x(0.5*(TXY.we_long.niceMin + TXY.we_long.niceMax));
+		float y=TXY.y(TXY.ns_lat.niceMin);
 		body << "<text x='" << x << "' y='" << y <<"'";
 		body << " fill='black' font-family='Times' font-size='"<<height<<"'";
 		//body << " text-anchor='middle' dy='1.5em'>" << "Longitude º W" << "</text>" << endl;
 		body << " text-anchor='middle' dy='1.5em'>" << "Longitude ºW" << "</text>" << endl;
-		x=T().x(we_long.niceMin)-height;
-		y=T().y(0.5*(ns_lat.niceMin+ns_lat.niceMax));
+		x=TXY.x(TXY.we_long.niceMin)-height;
+		y=TXY.y(0.5*(TXY.ns_lat.niceMin+TXY.ns_lat.niceMax));
 		body << "<text x='" << x << "' y='" << y <<"'";
 		body << " fill='black' font-family='Times' font-size='"<<height<<"'";
 		body << " text-anchor='middle' dy='-1.5em'";
@@ -239,7 +260,7 @@ public:
 		return *this;
 	}
 
-	Shape& ShapeFile(const string& name, const int &col=-1, const float &fontSize=1.0){
+	Shape& ShapeFile(Transform2 &TXY, const string& name, const int &col=-1, const float &fontSize=1.0){
 		clear();
 		head<<"";
 		body<<"";
@@ -256,7 +277,7 @@ public:
 			cout<<sline<<endl;
 			cout<<"**************"<<endl;
 			while(getline(fileLines,sline)){
-				ReadLineShapeFile RL(sline);
+				ReadLineShapeFile RL(TXY, sline);
 				if(RL.PartiallyInsideTheBox){
 					body<<"<path d=\""<<RL.getPath()<<"\" "<<endl;
 					//body<<"fill='rgb("<<127+rand()%127<<","<<127+rand()%127<<","<<127+rand()%127<<")' ";
@@ -268,7 +289,7 @@ public:
 						tail<<"<text x='" << RL.xCentroid << "' y='" << RL.yCentroid <<"' ";
 						//tail<<"fill='rgb("<<80<<","<<80<<","<<80<<")' ";
 						tail<<"opacity='"<<0.8<<"' ";
-						tail<<"font-family='Times' font-size='"<<fontSize*T().textHeight<<"' ";
+						tail<<"font-family='Times' font-size='"<<fontSize<<"' ";
 						tail<<"text-anchor='middle'>" << RL.col[col] << "</text>" << endl;
 					}
 					//RL.polygonArea();
@@ -292,16 +313,12 @@ public:
 		return *this;
 	}
 
-	Shape& Mask(const float& _west, const float& _east,
-				const float& _south, const float& _north){
+	Shape& Mask(Transform2 &TXY){
 		clear();
-		NiceScale ns_lat(_south,_north,12);
-		NiceScale we_long(_west,_east,12);
-
-		float x1=T().x(we_long.niceMin);
-		float x2=T().x(we_long.niceMax);
-		float y1=T().y(ns_lat.niceMin);
-		float y2=T().y(ns_lat.niceMax);
+		float x1=TXY.x(TXY.we_long.niceMin);
+		float x2=TXY.x(TXY.we_long.niceMax);
+		float y1=TXY.y(TXY.ns_lat.niceMin);
+		float y2=TXY.y(TXY.ns_lat.niceMax);
 
 		//   A             --->                   B
 		//     (0,0)--------------------(3000,0)
@@ -320,9 +337,9 @@ public:
 		body<<"<path";
 		body<<" d='";
 		body<<" M"<<0<<" "<<0;
-		body<<" h"<<T().width;
-		body<<" v"<<T().height;
-		body<<" h"<<-T().width;
+		body<<" h"<<TXY.width;
+		body<<" v"<<TXY.height;
+		body<<" h"<<-TXY.width;
 		body<<" Z";
 		body<<" M"<<x1<<" "<<y1;
 		body<<" L"<<x2<<" "<<y1;

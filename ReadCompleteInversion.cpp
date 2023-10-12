@@ -57,3 +57,50 @@ ReadCompleteInversion::ReadCompleteInversion(ifstream &File){
     //	cout<<" unidades:"<<variables[i].unidades<<endl;
     //}
 }
+
+
+void ReadSlip(dataSlip &slip, string filename){
+	ifstream inFile;
+	//dataSlip data;
+	inFile.open(filename, std::ifstream::in);
+	if (inFile.is_open()){
+		cout<<"Abriendo complete_inversion.fsp"<<endl;
+		ReadCompleteInversion Ext(inFile);
+		int Nx,Nz;
+		double LAT_centro, LON_centro, STRK;
+		if( Ext.get("Nx",Nx) && Ext.get("Nz",Nz) && Ext.get("LAT",LAT_centro) && Ext.get("LON",LON_centro)  && Ext.get("STRK",STRK)){
+			cout<<"Nx:"<<Nx<<" Nz:"<<Nz<<" LAT:"<<LAT_centro<<" LON:"<<LON_centro<<endl;
+			slip.Nx=Nx;
+			slip.Nz=Nz;
+			slip.LAT=LAT_centro;
+			slip.LON=LON_centro;
+			slip.STRK=STRK;
+			float LAT,LON,X,Y,Z,SLIP,RAKE,TRUP,RISE,SF_MOMENT;
+			float max=-std::numeric_limits<float>::max();
+			float min=std::numeric_limits<float>::max();
+			vector<float> u(Nx*Nz);
+			int i=0,j=0;
+			int k=0;
+			//vector< vector< pair<Coord,float> > > coordInvSlip(Nz);
+			slip.data.resize(Nz);
+			for( int j=0; j<Nz; j++){
+				vector< pointSlip > row(Nx);
+				for( int i=0; i<Nx; i++){
+					string line;
+					getline(inFile,line);
+					stringstream ssline(line);
+					if(! (ssline>>LAT>>LON>>X>>Y>>Z>>SLIP>>RAKE>>TRUP>>RISE>>SF_MOMENT) ){
+						cout<<"Se esperaba un parámetro más en la lectura"<<endl;
+					}
+					//row[i]=pair<Coord, float>( Coord( LON, LAT ), SLIP );
+					row[i]=pointSlip(Coord( LON, LAT ), SLIP);
+				}
+				slip.data[j]=row;
+			}
+		}
+	}else{
+		cout<<"No se encontro el archivo: complete_inversion.fsp"<<endl;
+	}
+
+	//return data;
+}

@@ -42,7 +42,7 @@ class ReadLineShapeFile{
   
 public:
 
-  ReadLineShapeFile(string& line);
+  ReadLineShapeFile(Transform2 &TXY, string& line);
   //double cx(){return T().x(_cx);};
   //double cy(){return T().y(_cy);};
   /*
@@ -53,12 +53,12 @@ public:
   double ymin(){return T().y(_ymin);};
   double ymax(){return T().y(_ymax);};
   */
-  double cx(){return T().x( (vpol[imax].xmin+vpol[imax].xmax)/2.0 );};
-  double cy(){return T().y( (vpol[imax].ymin+vpol[imax].ymax)/2.0 );};
-  double xmin(){return T().x(vpol[imax].xmin);};
-  double xmax(){return T().x(vpol[imax].xmax);};
-  double ymin(){return T().y(vpol[imax].ymin);};
-  double ymax(){return T().y(vpol[imax].ymax);};
+  double cx(){return TXY.x( (vpol[imax].xmin+vpol[imax].xmax)/2.0 );};
+  double cy(){return TXY.y( (vpol[imax].ymin+vpol[imax].ymax)/2.0 );};
+  double xmin(){return TXY.x(vpol[imax].xmin);};
+  double xmax(){return TXY.x(vpol[imax].xmax);};
+  double ymin(){return TXY.y(vpol[imax].ymin);};
+  double ymax(){return TXY.y(vpol[imax].ymax);};
   
   void polyCentroid();
   int pnpoly(double x, double y);
@@ -69,6 +69,7 @@ public:
   bool PartiallyInsideTheBox=false;
   double xCentroid;
   double yCentroid;
+  Transform2 TXY;
 };
 
 #endif // LOAD_SHAPE_FILE_HPP

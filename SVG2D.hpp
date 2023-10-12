@@ -17,12 +17,13 @@ class SVG2D{
 
 	
   public:
-  Transform2 T2;
+  Transform2 *TXY;
   SVG2D(const string& name, const int& width, const int& height, const string& id="");
+  SVG2D(Transform2 &TXY, const string& name, const string& id="");
   ~SVG2D();
   void add(const Shape& ss);
-  void setTransform(Transform2 T2){
-	  this->T2=T2;
+  void setTransform(Transform2 &TXY){
+	  this->TXY=&TXY;
   }
 };
 

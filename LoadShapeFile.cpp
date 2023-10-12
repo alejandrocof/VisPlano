@@ -16,14 +16,15 @@ void ReadLineShapeFile::polyCentroid(){
 	//*area = atmp / 2;
 	if (atmp != 0.0)
 	{
-		xCentroid = T().x( xtmp / (3.0 * atmp) );
-		yCentroid = T().y( ytmp / (3.0 * atmp) );
+		xCentroid = TXY.x( xtmp / (3.0 * atmp) );
+		yCentroid = TXY.y( ytmp / (3.0 * atmp) );
 	}
 
 }
 
 
-ReadLineShapeFile::ReadLineShapeFile(string& line){
+ReadLineShapeFile::ReadLineShapeFile(Transform2 &TXY, string& line){
+	this->TXY=TXY;
   size_t ini=line.find_first_of("\"");
   size_t end=line.find_first_of("\"",ini+1);
   stringstream data(line.substr(end+1));
@@ -75,7 +76,7 @@ ReadLineShapeFile::ReadLineShapeFile(string& line){
             pol.xmax=(point.x>pol.xmax)?point.x:pol.xmax;
             pol.ymin=(point.y<pol.ymin)?point.y:pol.ymin;
             pol.ymax=(point.y>pol.ymax)?point.y:pol.ymax;
-            PartiallyInsideTheBox |= T().withinGeoCoor(point.x,point.y);
+			PartiallyInsideTheBox |= TXY.withinGeoCoor(point.x,point.y);
             N++;
           }
           
@@ -119,9 +120,9 @@ string ReadLineShapeFile::getPath(){
   
 	  for(auto &&pol:vpol){
   		  //ssPolygon<<"M "<<T().x(pols[0].x)<<" "<<T().y(pols[0].y)<<" L ";
-  		  ssPolygon<<"M"<<T().x(pol.p[0].x)<<" "<<T().y(pol.p[0].y)<<" L";
+		  ssPolygon<<"M"<<TXY.x(pol.p[0].x)<<" "<<TXY.y(pol.p[0].y)<<" L";
   		  for(int i=1;i<pol.p.size()-1;i++){
-  		    ssPolygon<<T().x(pol.p[i].x)<<" "<<T().y(pol.p[i].y)<<" ";
+			ssPolygon<<TXY.x(pol.p[i].x)<<" "<<TXY.y(pol.p[i].y)<<" ";
   		  }
   	}
   	ssPolygon<<"z";

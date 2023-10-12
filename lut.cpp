@@ -67,6 +67,7 @@ void lut::getColor(float lambda, Color &color){
 	color.b = vec[3*indice+2] + delta*( vec[3*(indice+1)+2]-vec[3*indice+2] );
 }
 
+//velocidad
 lut colorMap1(
 		vector<Color>{
 			Color(153,102,255),
@@ -79,8 +80,11 @@ lut colorMap1(
 		}
 		);
 
+//velmaxima
 lut colorMap2(
 		vector<Color>{
+			Color(255,255,255),
+			Color(153,102,255),
 			Color(0,0,255),
 			Color(0,255,255),
 			Color(0,255,0),
@@ -89,6 +93,7 @@ lut colorMap2(
 		}
 		);
 
+//slip
 lut colorMap3(
 		vector<Color>{
 			Color(255,255,255),
@@ -110,5 +115,18 @@ lut colorMap3(
 			Color(255,121,0),
 			Color(255,65,0),
 			Color(255,8,0),
+		}
+		);
+
+//normavelocidad
+lut colorMap4(
+		vector<Color>{
+			Color(255,255,255),
+			Color(153,102,255),
+			Color(0,0,255),
+			Color(0,255,255),
+			Color(0,255,0),
+			Color(255,255,0),
+			Color(255,0,0),
 		}
 		);

@@ -9,7 +9,7 @@
 #include"Utils.hpp"
 
 using namespace std;
-enum component{X,Y,Z};
+enum component{X=0,Y,Z};
 
 struct configComponent{
 	component comp;
