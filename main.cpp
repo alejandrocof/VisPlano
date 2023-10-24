@@ -800,7 +800,7 @@ void make_svg_max(Transform2 &TXY,string nameSVG, data2D<float> &dataVmax, dataS
 		}
 	}
 	svg.add( Shape().EndGroup());
-
+/*
 	Coord C00 = dataVmax.imgT.ij2latlng( 0, 0 );
 	Coord C10 = dataVmax.imgT.ij2latlng( dataVmax.imgT.SX, 0 );
 	Coord C01 = dataVmax.imgT.ij2latlng( 0, dataVmax.imgT.SY );
@@ -826,7 +826,7 @@ void make_svg_max(Transform2 &TXY,string nameSVG, data2D<float> &dataVmax, dataS
 			 .fill(0,0,0).stroke(255,0,0)
 			 .strokeWidth(0.05*TXY.textHeight)
 			 .opacity(0.8) );
-
+*/
 
 	double colorBarX=21.0*image_width/24.0;
 	double colorBarY=1.0*image_height/8.0;
@@ -1019,7 +1019,7 @@ void make_svg_mmi_maxvel(Transform2 &TXY, string nameSVG, data2D<float> &dataVma
 			for(int i=0; i<vs.size()-1; i+=2){
 				svg.add( Shape().Line( TXY.x(vs[i].lon), TXY.y(vs[i].lat),
 									   TXY.x(vs[i+1].lon), TXY.y(vs[i+1].lat) )
-						.stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(1.0).strokeLinecap("round") );
+						.stroke( 0.7*isovel[k].color.r, 0.7*isovel[k].color.g, 0.7*isovel[k].color.b).strokeWidth(2.0).strokeLinecap("round") );
 			}
 		}
 	}
@@ -2024,14 +2024,14 @@ int main(int argc, char *argv[])
 
 	NiceScale nsMax(0,valmax2.Max() );
 
-
+	bool chessBoard=false;
 	vector< curve > isovel;
 	vector< curve > isovelxyz;
 	isovel=isoValue(valmax2);
 	isovelxyz=isoValue(valxyzmax2);
 
 	stringstream namePNG_MaxZ,nameSVG_MaxZ,nameRoot_MaxZ;
-	nameRoot_MaxZ<<nFilePrefix<<"-MaxZ";
+	nameRoot_MaxZ<<"VxMax3D-Z";
 	namePNG_MaxZ<<nameRoot_MaxZ.str()<<".png";
 	nameSVG_MaxZ<<nameRoot_MaxZ.str()<<".svg";
 	cout<<namePNG_MaxZ.str()<<endl;
@@ -2055,22 +2055,25 @@ int main(int argc, char *argv[])
 //				g=255;
 //				b=255;
 //			}
+			if(chessBoard){
+				if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
+					r=3*r/4;
+					g=3*g/4;
+					b=3*b/4;
+				}
+				if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
+					r=r/2;
+					g=g/2;
+					b=b/2;
+				}
+				if( x==infoData.NXSC() && y==infoData.NYSC() ){
+					r=0;
+					g=0;
+					b=0;
+				}
+			}
 
-			if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
-				r=3*r/4;
-				g=3*g/4;
-				b=3*b/4;
-			}
-			if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
-				r=r/2;
-				g=g/2;
-				b=b/2;
-			}
-			if( x==infoData.NXSC() && y==infoData.NYSC() ){
-				r=0;
-				g=0;
-				b=0;
-			}
+
 			lineMaxZ[x * 3 + 0] = static_cast<uint8_t>(r);
 			lineMaxZ[x * 3 + 1] = static_cast<uint8_t>(g);
 			lineMaxZ[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -2081,7 +2084,7 @@ int main(int argc, char *argv[])
 
 	NiceScale nsxyzMax(0,valxyzmax2.Max() );
 	stringstream namePNG_MaxXYZ,nameSVG_MaxXYZ,nameRoot_MaxXYZ;
-	nameRoot_MaxXYZ<<nFilePrefix<<"-MaxXYZ";
+	nameRoot_MaxXYZ<<"VxyzMax3D-Z";
 	namePNG_MaxXYZ<<nameRoot_MaxXYZ.str()<<".png";
 	nameSVG_MaxXYZ<<nameRoot_MaxXYZ.str()<<".svg";
 	cout<<namePNG_MaxXYZ.str()<<endl;
@@ -2097,22 +2100,24 @@ int main(int argc, char *argv[])
 			double f = (valxyzmax2.get(x,y)-nsxyzMax.niceMin)/(nsxyzMax.niceMax-nsxyzMax.niceMin);
 
 			colorMap2.getColor(f, r, g, b);
+			if(chessBoard){
+				if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
+					r=3*r/4;
+					g=3*g/4;
+					b=3*b/4;
+				}
+				if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
+					r=r/2;
+					g=g/2;
+					b=b/2;
+				}
+				if( x==infoData.NXSC() && y==infoData.NYSC() ){
+					r=0;
+					g=0;
+					b=0;
+				}
+			}
 
-			if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
-				r=3*r/4;
-				g=3*g/4;
-				b=3*b/4;
-			}
-			if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
-				r=r/2;
-				g=g/2;
-				b=b/2;
-			}
-			if( x==infoData.NXSC() && y==infoData.NYSC() ){
-				r=0;
-				g=0;
-				b=0;
-			}
 			lineMaxXYZ[x * 3 + 0] = static_cast<uint8_t>(r);
 			lineMaxXYZ[x * 3 + 1] = static_cast<uint8_t>(g);
 			lineMaxXYZ[x * 3 + 2] = static_cast<uint8_t>(b);
@@ -2152,7 +2157,7 @@ int main(int argc, char *argv[])
 		}
 
 		stringstream namePNG_MMI,nameSVG_MMI,nameRoot_MMI;
-		nameRoot_MMI<<nFilePrefix<<"-MMI";
+		nameRoot_MMI<<"MMI3D-Z";
 		namePNG_MMI<<nameRoot_MMI.str()<<".png";
 		nameSVG_MMI<<nameRoot_MMI.str()<<".svg";
 		cout<<namePNG_MMI.str()<<endl;
@@ -2208,12 +2213,11 @@ int main(int argc, char *argv[])
 		make_svg_mmi(TXY,"./imagenes/"+nameSVG_MMI.str(),valmmi,vRadio, slip);
 		//void make_svg_mmi(Transform2 &TXY, string nameSVG, data2D<float> &dataVmax, vector<double> &vRadio, dataSlip slip){
 
-		stringstream namePNG_MMI_MaxVel,nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
-		nameRoot_MMI_MaxVel<<nFilePrefix<<"-MMI_MaxVel";
-		namePNG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".png";
+		stringstream nameSVG_MMI_MaxVel,nameRoot_MMI_MaxVel;
+		nameRoot_MMI_MaxVel<<"VxyzMax_MMI3D-Z";
 		nameSVG_MMI_MaxVel<<nameRoot_MMI_MaxVel.str()<<".svg";
-		cout<<namePNG_MMI_MaxVel.str()<<endl;
-		make_svg_mmi_maxvel(TXY,"./imagenes/"+nameSVG_MMI_MaxVel.str(),valmax2,vRadio, slip, colorMap2,nsMax,isovel );
+		//make_svg_mmi_maxvel(TXY,"./imagenes/"+nameSVG_MMI_MaxVel.str(),valmax2,vRadio, slip, colorMap2,nsMax,isovel );
+		make_svg_mmi_maxvel(TXY,"./imagenes/"+nameSVG_MMI_MaxVel.str(),valxyzmax2,vRadio, slip, colorMap2,nsxyzMax,isovelxyz );
 	}
 
 
