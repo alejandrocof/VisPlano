@@ -752,8 +752,8 @@ void make_svg_(Transform2 &TXY, int NTST, string nameSVG, data2D<float> &dataV, 
 							 ns, dataV.labelColorMap) );
 
 	addHyp2SVG(svg,slip);
-	addHoles2SVG(svg,infoData);
-	addPoints2SVG(svg, estaciones);
+	//addHoles2SVG(svg,infoData);
+	//addPoints2SVG(svg, estaciones);
 
 	svg.add( Shape().Mesh(TXY) );
 	//svg.add(Shape().Rectangle(T().x(-99), T().y(12),T().sx(1),T().sy(1)).fill( 0, 255, 0) );
@@ -1096,6 +1096,7 @@ void make_svg_slip(Transform2 &TXY, string nameSVG, string namePNG, lut &colorma
 
 int main(int argc, char *argv[])
 {
+	bool chessBoard=false;
 
 	configData configdat(argc, argv);
 
@@ -1939,25 +1940,28 @@ int main(int argc, char *argv[])
 						//	g=3*g/4;
 						//	b=3*b/4;
 						//}
+						if(chessBoard){
+							if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
+								rxyz=3*rxyz/4; gxyz=3*gxyz/4; bxyz=3*bxyz/4;
+								rx=3*rx/4; gx=3*gx/4; bx=3*bx/4;
+								ry=3*ry/4; gy=3*gy/4; by=3*by/4;
+								rz=3*rz/4; gz=3*gz/4; bz=3*bz/4;
+							}
+							if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
+								rxyz=rxyz/2; gxyz=gxyz/2; bxyz=bxyz/2;
+								rx=rx/2; gx=gx/2; bx=bx/2;
+								ry=ry/2; gy=gy/2; by=by/2;
+								rz=rz/2; gz=gz/2; bz=bz/2;
+							}
+							if( x==infoData.NXSC() && y==infoData.NYSC() ){
+								rxyz=0; gxyz=0; bxyz=0;
+								rx=0; gx=0; bx=0;
+								ry=0; gy=0; by=0;
+								rz=0; gz=0; bz=0;
+							}
+						}
 
-						if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
-							rxyz=3*rxyz/4; gxyz=3*gxyz/4; bxyz=3*bxyz/4;
-							rx=3*rx/4; gx=3*gx/4; bx=3*bx/4;
-							ry=3*ry/4; gy=3*gy/4; by=3*by/4;
-							rz=3*rz/4; gz=3*gz/4; bz=3*bz/4;
-						}
-						if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
-							rxyz=rxyz/2; gxyz=gxyz/2; bxyz=bxyz/2;
-							rx=rx/2; gx=gx/2; bx=bx/2;
-							ry=ry/2; gy=gy/2; by=by/2;
-							rz=rz/2; gz=gz/2; bz=bz/2;
-						}
-						if( x==infoData.NXSC() && y==infoData.NYSC() ){
-							rxyz=0; gxyz=0; bxyz=0;
-							rx=0; gx=0; bx=0;
-							ry=0; gy=0; by=0;
-							rz=0; gz=0; bz=0;
-						}
+
 						lineXYZ[x * 3 + 0] = static_cast<uint8_t>(rxyz);
 						lineXYZ[x * 3 + 1] = static_cast<uint8_t>(gxyz);
 						lineXYZ[x * 3 + 2] = static_cast<uint8_t>(bxyz);
@@ -2024,7 +2028,6 @@ int main(int argc, char *argv[])
 
 	NiceScale nsMax(0,valmax2.Max() );
 
-	bool chessBoard=false;
 	vector< curve > isovel;
 	vector< curve > isovelxyz;
 	isovel=isoValue(valmax2);
