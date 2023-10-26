@@ -45,6 +45,10 @@ public:
 		this->lxsc = this->NXSC*this->DH;
 		this->lysc = this->NYSC*this->DH;
 		this->DT = infoData.DT();
+		this->lng_cx = slip.LON;
+		this->lat_cy = slip.LAT;
+		this->lcx = infoData.lx()/2.0;
+		this->lcy = infoData.ly()/2.0;
 
 		if(dsettings.epi_lon && dsettings.epi_lat){
 			this->lng_nxsc = dsettings.epi_lon;
@@ -110,6 +114,10 @@ public:
 	double theta;
 	double theta_rad;
 	double DT;
+	double lng_cx;
+	double lat_cy;
+	double lcx;
+	double lcy;
 	
 
 	double x(const int i, const int j);
@@ -142,11 +150,11 @@ inline Coord ImgTransform::ij2latlng(const double i, const double j){
 // 0 .----------------.
 //   0                LX
 inline Coord ImgTransform::lxly2latlng(const double lx, const double ly){
-	double lng = ( lx - this->lxsc )/latlon2m;
-	double lat = ( ly - this->lysc )/latlon2m;
+	double lng = ( lx - this->lcx )/latlon2m;
+	double lat = ( ly - this->lcy )/latlon2m;
 	double lngrot = lng*cos(this->theta_rad) - lat*sin(this->theta_rad);
 	double latrot = lng*sin(this->theta_rad) + lat*cos(this->theta_rad);
-	return Coord( this->lng_nxsc+lngrot, this->lat_nysc+latrot);
+	return Coord( this->lng_cx+lngrot, this->lat_cy+latrot);
 	//return Coord( this->lng_nxsc, this->lat_nysc);
 }
 	

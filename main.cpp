@@ -202,6 +202,7 @@ template<typename T>
 struct data2D{
 	vector<T> data;
 	int Nx,Ny;
+	float Cx,Cy;
 	T max = -std::numeric_limits<T>::max();
 	T min = std::numeric_limits<T>::max();
 	T theta;
@@ -221,6 +222,8 @@ struct data2D{
 	data2D(ImgT imgT):imgT(imgT){
 		this->Nx=this->imgT.SX;
 		this->Ny=this->imgT.SY;
+		this->Cx=(float)this->imgT.SX/2.0;
+		this->Cy=(float)this->imgT.SY/2.0;
 		data.assign( this->Nx*this->Ny, -std::numeric_limits<float>::max() );
 	}
 
@@ -720,10 +723,15 @@ void make_svg_(Transform2 &TXY, int NTST, string nameSVG, data2D<float> &dataV, 
 	svg.add(Shape().ColorMap(colormap,"ColorMap"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
-	svg.add(Shape().Image( TXY.x(dataV.imgT.lng_nxsc), TXY.y(dataV.imgT.lat_nysc),
+//	svg.add(Shape().Image( TXY.x(dataV.imgT.lng_nxsc), TXY.y(dataV.imgT.lat_nysc),
+//						  TXY.sx(dataV.imgT.LX/latlon2m), TXY.sy(dataV.imgT.LY/latlon2m),
+//						  dataV.fileName,
+//						  TXY.sx(dataV.imgT.lxsc/latlon2m), TXY.sy((dataV.imgT.LY-dataV.imgT.lysc)/latlon2m),
+//						   dataV.imgT.theta));
+	svg.add(Shape().Image( TXY.x(dataV.imgT.lng_cx), TXY.y(dataV.imgT.lat_cy),
 						  TXY.sx(dataV.imgT.LX/latlon2m), TXY.sy(dataV.imgT.LY/latlon2m),
 						  dataV.fileName,
-						  TXY.sx(dataV.imgT.lxsc/latlon2m), TXY.sy((dataV.imgT.LY-dataV.imgT.lysc)/latlon2m),
+						  TXY.sx(dataV.imgT.lcx/latlon2m), TXY.sy((dataV.imgT.LY-dataV.imgT.lcy)/latlon2m),
 						   dataV.imgT.theta));
 
 	addSlip2SVG(svg, slip);
@@ -779,10 +787,10 @@ void make_svg_max(Transform2 &TXY,string nameSVG, data2D<float> &dataVmax, dataS
 	svg.add(Shape().ColorMap(colormap,"ColorMap"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
-	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_nxsc), TXY.y(dataVmax.imgT.lat_nysc),
+	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_cx), TXY.y(dataVmax.imgT.lat_cy),
 						  TXY.sx(dataVmax.imgT.LX/latlon2m), TXY.sy(dataVmax.imgT.LY/latlon2m),
 						  dataVmax.fileName,
-						  TXY.sx(dataVmax.imgT.lxsc/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lysc)/latlon2m),
+						  TXY.sx(dataVmax.imgT.lcx/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lcy)/latlon2m),
 						   dataVmax.imgT.theta ));
 	addSlip2SVG(svg, slip);
 	svg.add( Shape().Use("mapa.svg","mapa") );
@@ -857,10 +865,10 @@ void make_svg_mmi(Transform2 &TXY, string nameSVG, data2D<float> &dataVmax, vect
 	svg.add(Shape().ColorMap(colorMap2,"ColorMap2"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
-	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_nxsc), TXY.y(dataVmax.imgT.lat_nysc),
+	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_cx), TXY.y(dataVmax.imgT.lat_cy),
 						  TXY.sx(dataVmax.imgT.LX/latlon2m), TXY.sy(dataVmax.imgT.LY/latlon2m),
 						  dataVmax.fileName,
-						  TXY.sx(dataVmax.imgT.lxsc/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lysc)/latlon2m),
+						  TXY.sx(dataVmax.imgT.lcx/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lcy)/latlon2m),
 						   dataVmax.imgT.theta ));
 	addSlip2SVG(svg, slip);
 	//slip2(svg, coordInvSlip);
@@ -987,10 +995,10 @@ void make_svg_mmi_maxvel(Transform2 &TXY, string nameSVG, data2D<float> &dataVma
 	svg.add(Shape().ColorMap(colormap,"ColorMap"));
 	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
 
-	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_nxsc), TXY.y(dataVmax.imgT.lat_nysc),
+	svg.add(Shape().Image( TXY.x(dataVmax.imgT.lng_cx), TXY.y(dataVmax.imgT.lat_cy),
 						  TXY.sx(dataVmax.imgT.LX/latlon2m), TXY.sy(dataVmax.imgT.LY/latlon2m),
 						  dataVmax.fileName,
-						  TXY.sx(dataVmax.imgT.lxsc/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lysc)/latlon2m),
+						  TXY.sx(dataVmax.imgT.lcx/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lcy)/latlon2m),
 						   dataVmax.imgT.theta ));
 	//slip(svg);
 //	vector< vector< pair<Coord,float> > > coordInvSlip;
@@ -1096,7 +1104,7 @@ void make_svg_slip(Transform2 &TXY, string nameSVG, string namePNG, lut &colorma
 
 int main(int argc, char *argv[])
 {
-	bool chessBoard=false;
+	bool chessBoard=true;
 
 	configData configdat(argc, argv);
 
@@ -2025,6 +2033,22 @@ int main(int argc, char *argv[])
 		valxyzmax2.data=readFile("./velxyzMax_bin.dat");
 	}
 
+	/*
+	ofstream output_file("./velxyzMax_ASCII.dat");
+	int SY_sub=SY/4;
+	int SX_sub=SX/4;
+	int isub=1;
+	int jsub=2;
+
+	for (int j =jsub*SY_sub+SY_sub-1; j>=jsub*SY_sub; j--) {
+		for (int i = isub*SX_sub; i <isub*SX_sub+SX_sub-1; i++) {
+			output_file <<valxyzmax2.get(i,j)<<", ";
+		}
+		output_file <<valxyzmax2.get(isub*SX_sub+SX_sub-1,j)<<endl;
+	}
+	*/
+
+
 
 	NiceScale nsMax(0,valmax2.Max() );
 
@@ -2053,11 +2077,26 @@ int main(int argc, char *argv[])
 			colorMap2.getColor(f, r, g, b);
 
 			//cout<<index_xy<<" "<<particionesID[valID[index_xy]]<<endl;
-//			if( particionesID[valID[index_xy]]==63){
-//				r=255;
-//				g=255;
-//				b=255;
-//			}
+			if( particionesID[valxyzID[X][index_xy]]==19){
+				r=255;
+				g=0;
+				b=0;
+			}
+			if( particionesID[valxyzID[X][index_xy]]==23){
+				r=0;
+				g=255;
+				b=0;
+			}
+			if( particionesID[valxyzID[X][index_xy]]==27){
+				r=0;
+				g=0;
+				b=255;
+			}
+			if( particionesID[valxyzID[X][index_xy]]==31){
+				r=255;
+				g=255;
+				b=0;
+			}
 			if(chessBoard){
 				if( id2ijk.at(valxyzID[X][index_xy]).i % 2 != id2ijk.at(valxyzID[X][index_xy]).j % 2 ){
 					r=3*r/4;
