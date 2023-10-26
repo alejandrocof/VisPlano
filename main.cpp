@@ -663,52 +663,6 @@ void make_map_(Transform2 &TXY, DisplaySettings &dsettings){
 #endif
 }
 
-/*
-void holes_(int *nbhx, int *nbhy, int *nholes){
-	NBHX=nbhx;
-	NBHY=nbhy;
-	NHOLES=*nholes;
-
-	int image_width=T().width;
-	int image_height=T().height;
-
-#if defined DEBUG
-	cout<<"Holes"<<endl;
-	for(int i=0;i<NHOLES;i++){
-		cout<<i<<" "<<NBHX[i]<<" "<<NBHY[i]<<endl;
-	}
-	cout<<"Creando archivo Holes"<<endl;
-#endif
-
-	SVG2D svg("./imagenes/holes.svg",T().width,T().height);
-	svg.add(Shape().Rectangle(0, 0,image_width,image_height).fill(192, 192, 210) );
-	svg.add(Shape().Rectangle(T().x(cell2geo_lon(0)),T().y(cell2geo_lat(ny)),T().sx(nx*dh/latlon2m),T().sy(ny*dh/latlon2m)).fill(255,255,255) );
-	svg.add( Shape().Use("mapa.svg","mapa") );
-	svg.add( Shape().Circle(T().x(epi_lon),T().y(epi_lat),T().pointHeight)
-			 .fill(255,0,0).stroke(0,0,0).strokeWidth(T().sx(0.02)) );
-	svg.add( Shape().Text(T().x(epi_lon),T().y(epi_lat)-T().pointHeight,"Epic")
-			 .align("middle").fontSize(T().textHeight).fontFamily("Times").opacity(0.8) );
-
-	for(int i=0;i<NHOLES;i++){
-		double Tx=T().x(cell2geo_lon(NBHX[i]));
-		double Ty=T().y(cell2geo_lat(NBHY[i]));
-		svg.add( Shape().Circle(Tx,Ty,0.5*T().pointHeight)
-				 .fill(128,128,255).stroke(0,0,0).strokeWidth(T().sx(0.02)).opacity(0.8) );
-		stringstream ssindex;
-		ssindex << i+1 ;
-		svg.add(Shape().Text( Tx, Ty-0.5*T().pointHeight, ssindex.str())
-				.align( "middle" ).fontSize(0.25*T().textHeight)
-				.fontFamily( "Times" ).opacity(0.8) );
-	}
-	svg.add( Shape().Mesh(BB().xmin(),BB().xmax(),BB().ymin(),BB().ymax()) );
-#if defined DEBUG
-	cout<<"Holes ok"<<endl;
-#endif
-
-}
-*/
-
-
 
 //void make_svg_(int *ntst, double *dt, int *nbgxs, int *nedxs, int *nbgys, int *nedys, int *nbgzs, int *nedzs, int *size,int *layerGlobal){
 void make_svg_(Transform2 &TXY, int NTST, string nameSVG, data2D<float> &dataV, dataSlip slip, lut &colormap, NiceScale ns){
@@ -808,33 +762,7 @@ void make_svg_max(Transform2 &TXY,string nameSVG, data2D<float> &dataVmax, dataS
 		}
 	}
 	svg.add( Shape().EndGroup());
-/*
-	Coord C00 = dataVmax.imgT.ij2latlng( 0, 0 );
-	Coord C10 = dataVmax.imgT.ij2latlng( dataVmax.imgT.SX, 0 );
-	Coord C01 = dataVmax.imgT.ij2latlng( 0, dataVmax.imgT.SY );
-	Coord C11 = dataVmax.imgT.ij2latlng( dataVmax.imgT.SX, dataVmax.imgT.SY );
-	Coord Cnsc = dataVmax.imgT.ij2latlng( dataVmax.imgT.NXSC, dataVmax.imgT.NYSC );
-	svg.add( Shape().Circle(TXY.x(C00.lon), TXY.y(C00.lat),0.3*TXY.pointHeight)
-			 .fill(0,255,0).stroke(0,0,0)
-			 .strokeWidth(0.05*TXY.textHeight)
-			 .opacity(0.8) );
-	svg.add( Shape().Circle(TXY.x(C10.lon), TXY.y(C10.lat),0.3*TXY.pointHeight)
-			 .fill(255,0,0).stroke(0,0,0)
-			 .strokeWidth(0.05*TXY.textHeight)
-			 .opacity(0.8) );
-	svg.add( Shape().Circle(TXY.x(C01.lon), TXY.y(C01.lat),0.3*TXY.pointHeight)
-			 .fill(255,0,0).stroke(0,0,0)
-			 .strokeWidth(0.05*TXY.textHeight)
-			 .opacity(0.8) );
-	svg.add( Shape().Circle(TXY.x(C11.lon), TXY.y(C11.lat),0.3*TXY.pointHeight)
-			 .fill(255,0,0).stroke(0,0,0)
-			 .strokeWidth(0.05*TXY.textHeight)
-			 .opacity(0.8) );
-	svg.add( Shape().Circle(TXY.x(Cnsc.lon), TXY.y(Cnsc.lat),0.3*TXY.pointHeight)
-			 .fill(0,0,0).stroke(255,0,0)
-			 .strokeWidth(0.05*TXY.textHeight)
-			 .opacity(0.8) );
-*/
+
 
 	double colorBarX=21.0*image_width/24.0;
 	double colorBarY=1.0*image_height/8.0;
@@ -934,45 +862,6 @@ void make_svg_mmi(Transform2 &TXY, string nameSVG, data2D<float> &dataVmax, vect
 
 	addHyp2SVG(svg,slip);
 
-
-
-//	for(int i=0; i<infoData.HOLE_N(); i++){
-//		double x=Tx+T().sx(infoData.HOLE_X(i)*dh/latlon2m);
-//		double y=Ty+Tdy-T().sy(infoData.HOLE_Y(i)*dh/latlon2m);
-//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
-//				 .fill(0,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
-//		stringstream coordEst;
-//		coordEst<<i<<" ("<<infoData.HOLE_X(i)<<", "<<infoData.HOLE_Y(i)<<")";
-//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
-//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
-////		svg.add( Shape().Text(x,y-1.5*T().pointHeight,to_string(i+1))
-////				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
-//	}
-
-
-//	vector< pair<int,int> > vp={
-//		pair<int,int>(1,1),
-//		pair<int,int>(infoData.NX(),1),
-//		pair<int,int>(infoData.NX(),infoData.NY()),
-//		pair<int,int>(1,infoData.NY())
-//	};
-//	for(const auto& p: vp ){
-//		double x=Tx+T().sx(p.first*dh/latlon2m);
-//		double y=Ty+Tdy-T().sy(p.second*dh/latlon2m);
-//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
-//				 .fill(64,64,64).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
-//		stringstream coordEst;
-//		coordEst<<"("<<p.first<<", "<<p.second<<")";
-//		svg.add( Shape().Text(x,y-1.5*T().pointHeight,coordEst.str() )
-//				 .align("middle").fontSize(0.5*T().textHeight).fontFamily("Times").opacity(0.8) );
-//	}
-
-//	for(const Coord& est: estaciones ){
-//		double x=T().x(est.lon);
-//		double y=T().y(est.lat);
-//		svg.add( Shape().Circle(x,y,0.6*T().pointHeight)
-//				 .fill(255,0,255).stroke(0,0,0).strokeWidth(0.1*T().textHeight).opacity(0.8) );
-//	}
 	svg.add( Shape().Mesh(TXY) );
 
 }
@@ -1000,15 +889,7 @@ void make_svg_mmi_maxvel(Transform2 &TXY, string nameSVG, data2D<float> &dataVma
 						  dataVmax.fileName,
 						  TXY.sx(dataVmax.imgT.lcx/latlon2m), TXY.sy((dataVmax.imgT.LY-dataVmax.imgT.lcy)/latlon2m),
 						   dataVmax.imgT.theta ));
-	//slip(svg);
-//	vector< vector< pair<Coord,float> > > coordInvSlip;
-//	ReadSlip(coordInvSlip);
-	//slip2(svg, coordInvSlip);
 	addSlip2SVG(svg, slip);
-	//svg.add(Shape().Image(Tx+rotx,Ty+roty,Tdx,Tdy,namePNG,rotx,roty,theta));
-//	svg.add( Shape().MaskRaw(lon1,lon2,lat2,lat1).fill(192, 192, 210) );
-//	cout<<"xmin:"<<BB().xmin()<<" xmax:"<<BB().xmax()<<" lon1:"<<lon1<<" lon2:"<<lon2<<endl;
-//	cout<<"ymin:"<<BB().ymin()<<" ymax:"<<BB().ymax()<<" lat1:"<<lat1<<" lat2:"<<lat2<<endl;
 
 
 	svg.add( Shape().Use("mapa.svg","mapa") );
@@ -1222,38 +1103,11 @@ int main(int argc, char *argv[])
 	//transformation_settings_( infoData.DH(), infoData.NXSC()-infoData.NBGX(), infoData.NYSC()-infoData.NBGY(), infoData.SX()*infoData.NSKPX(), infoData.SY()*infoData.NSKPY());
 	//transformation_settings_( infoData );
 	Transform2 TXY=transformation_settings2_( img, dsettings );
-//	Coord p00=img.ij2latlng(0,0);
-//	Coord p10=img.ij2latlng(img.SX-1,0);
-//	Coord p01=img.ij2latlng(0,img.SY-1);
-//	Coord p11=img.ij2latlng(img.SX-1,img.SY-1);
-//	cout<<"****************"<<endl;
-//	cout<<p00.lon<<", "<<p00.lat<<endl;
-//	cout<<p10.lon<<", "<<p10.lat<<endl;
-//	cout<<p01.lon<<", "<<p01.lat<<endl;
-//	cout<<p11.lon<<", "<<p11.lat<<endl;
-//	cout<<"****************"<<endl;
-//	BB(p00.lon,p00.lat);
-//	BB(p10.lon,p10.lat);
-//	BB(p01.lon,p01.lat);
-//	BB(p11.lon,p11.lat);
 
-//	NiceScale ns_lat(BB().ymin(),BB().ymax(),12);
-//	NiceScale we_long(BB().xmin(),BB().xmax(),12);
-
-//	Transform2 TXY( dsettings.imageWidth, dsettings.imageHeight,-115.0, -70.0, -3, 33.0);
-//	Transform2 TXY( dsettings.imageWidth, dsettings.imageHeight,
-//					BB().xmin(), BB().xmax(),
-//					BB().ymin(), BB().ymax());
-//	Transform2 TXY( dsettings.imageWidth, dsettings.imageHeight,
-//					we_long.niceMin, we_long.niceMax,
-//					ns_lat.niceMin, ns_lat.niceMax);
 
 	make_map_(TXY, dsettings);
 	dt=infoData.DT();
 
-	//make_svg_(200);
-	//make_svg_(timeIndex,"./imagenes/"+nameSVG_Z.str(),"./Z/"+namePNG_Z.str());
-	//return 0;
 
 	int SX=infoData.SX();
 	int SY=infoData.SY();
@@ -1263,8 +1117,6 @@ int main(int argc, char *argv[])
 
 	vector<float> val;
 	vector<int> valID;
-//	val.resize( SX*SY*SZ );
-//	valID.resize( SX*SY*SZ );
 
 	vector<vector<float>> valxyz(3);
 	vector<vector<int>> valxyzID(3);
@@ -1273,16 +1125,6 @@ int main(int argc, char *argv[])
 		valxyzID[i].resize( SX*SY*SZ );
 	}
 
-//	vector<float> valVx, valVy, valVz;
-//	vector<int> valVxID, valVyID, valVzID;
-//	valVx.resize( SX*SY*SZ );
-//	valVy.resize( SX*SY*SZ );
-//	valVz.resize( SX*SY*SZ );
-//	valVxID.resize( SX*SY*SZ );
-//	valVyID.resize( SX*SY*SZ );
-//	valVzID.resize( SX*SY*SZ );
-
-	//data2D<float> valmax2( SX, SY, -std::numeric_limits<float>::max() );
 
 	data2D<float> valmax2( img );
 	data2D<float> valxyzmax2( img );
@@ -1393,79 +1235,7 @@ int main(int argc, char *argv[])
 
 	dstepIndex=infoData.NTISKP();
 
-	//	pushColor(153,102,255);//min
-	//	pushColor(0,0,255);
-	//	pushColor(0,255,0);
 
-	////	pushColor(255,255,255);
-	//	pushColor(0,0,0);
-
-	//	pushColor(255,255,0);
-	//	pushColor(255,102,0);
-	//	pushColor(255,0,0);//max
-
-	//inicializa el arreglo
-//	for(int id=0; id<NParticiones; id++){
-//		for(int kk=particionesSZo[id]; kk<particionesSZf[id]; kk++){
-//			int Pz=kk*SX*SY;
-//			for(int jj=particionesSYo[id]; jj<particionesSYf[id]; jj++){
-//				int Ly=jj*SX;
-//				for(int ii=particionesSXo[id]; ii<particionesSXf[id]; ii++){
-//					val[ii+Ly+Pz]=(float)id/NParticiones;
-//				}
-//			}
-//		}
-//	}
-
-	//    stringstream namePNG_X;
-	//    namePNG_X<<"./imagenes/Particiones-X"<<setw(calculaCifras(SX))<<setfill('0')<<planoX<<".png";
-	//    std::ofstream outX(namePNG_X.str(), std::ios::binary);
-	//    TinyPngOut pngoutX(static_cast<uint32_t>(SY), static_cast<uint32_t>(SZ), outX);
-	//    std::vector<uint8_t> lineX(static_cast<size_t>(SY) * 3);
-	//    for (int z = SZ-1; z >= 0; z--) {
-	//        for (int y = 0; y < SY; y++) {
-	//            uint8_t r, g, b;
-	//            colorMap(val[planoX+SX*y+SX*SY*z], r, g, b);
-	//            lineX[y * 3 + 0] = static_cast<uint8_t>(r);
-	//            lineX[y * 3 + 1] = static_cast<uint8_t>(g);
-	//            lineX[y * 3 + 2] = static_cast<uint8_t>(b);
-	//        }
-	//        pngoutX.write(lineX.data(), static_cast<size_t>(SY));
-	//    }
-
-	//    stringstream namePNG_Y;
-	//    namePNG_Y<<"./imagenes/Particiones-Y"<<setw(calculaCifras(SY))<<setfill('0')<<planoY<<".png";
-	//    std::ofstream outY(namePNG_Y.str(), std::ios::binary);
-	//    TinyPngOut pngoutY(static_cast<uint32_t>(SX), static_cast<uint32_t>(SZ), outY);
-	//    std::vector<uint8_t> lineY(static_cast<size_t>(SX) * 3);
-	//    for (int z = SZ-1; z >= 0; z--) {
-	//        for (int x = 0; x < SX; x++) {
-	//            uint8_t r, g, b;
-	//            colorMap(val[x+SX*planoY+SX*SY*z], r, g, b);
-	//            lineY[x * 3 + 0] = static_cast<uint8_t>(r);
-	//            lineY[x * 3 + 1] = static_cast<uint8_t>(g);
-	//            lineY[x * 3 + 2] = static_cast<uint8_t>(b);
-	//        }
-	//        pngoutY.write(lineY.data(), static_cast<size_t>(SX));
-	//    }
-
-	//    stringstream namePNG_Z;
-	//    namePNG_Z<<"./imagenes/Particiones-Z"<<setw(calculaCifras(SZ))<<setfill('0')<<planoZ<<".png";
-	//    std::ofstream outZ(namePNG_Z.str(), std::ios::binary);
-	//    TinyPngOut pngoutZ(static_cast<uint32_t>(SX), static_cast<uint32_t>(SY), outZ);
-	//    std::vector<uint8_t> lineZ(static_cast<size_t>(SX) * 3);
-	//    for (int y = SY-1; y >= 0; y--) {
-	//        for (int x = 0; x < SX; x++) {
-	//            uint8_t r, g, b;
-	//            colorMap(val[x+SX*y+SX*SY*planoZ], r, g, b);
-	//            lineZ[x * 3 + 0] = static_cast<uint8_t>(r);
-	//            lineZ[x * 3 + 1] = static_cast<uint8_t>(g);
-	//            lineZ[x * 3 + 2] = static_cast<uint8_t>(b);
-	//        }
-	//        pngoutZ.write(lineZ.data(), static_cast<size_t>(SX));
-	//    }
-
-	/***********************/
 	ifstream fileSlip;
 	fileSlip.open("Slip_dist.dat", std::ifstream::in);
 	cout<<"Slip_dist.dat"<<endl;
@@ -1541,10 +1311,11 @@ int main(int argc, char *argv[])
 		//#pragma omp parallel for num_threads(2)
 		//#pragma omp parallel for num_threads(2) collapse(2)
 		//#pragma omp parallel for collapse(2)
-		vector< vector< data2D<float> > > vel(3);
-		vector< data2D<float> > velxyz;
+
 		for(int timeIndex=stepIndexIni;timeIndex<stepIndexEnd;timeIndex+=dstepIndex)
 		{
+			vector< vector< data2D<float> > > vel(3);
+			vector< data2D<float> > velxyz;
 
 
 			//double min=cdat.data[i].min;
@@ -1556,53 +1327,6 @@ int main(int argc, char *argv[])
 			cout<<nFilePrefix<<" "<<timeIndex;
 
 			NiceScale ns(dsettings.VELXMIN,dsettings.VELXMAX);
-//#pragma omp parallel for
-//			for(int id=0; id<NParticiones; id++){
-//				stringstream nameFile;
-//				stringstream nameFileR;
-//				nameFile<<nFilePrefix;
-//				nameFile<<setw(ndigID)<<setfill('0')<<particionesID[id];
-//				nameFile<<setw(ndigTI)<<setfill('0')<<timeIndex;
-//				nameFileR<<configdat.path<<"/"<<SubLocation<<"/"<<nameFile.str();
-//				std::ifstream file(nameFileR.str().c_str(),std::ios::binary|std::ios::in);
-//				if( file.fail() ){
-//					cerr<<" ERROR: no se puede abrir el archivo "<<nameFileR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//					//return 1;
-//				}
-
-//				std::filebuf* pbuf = file.rdbuf();
-//				std::size_t size = pbuf->pubseekoff (0,file.end,file.in);
-//				if(size!= (unsigned long)( 4*particionesSizeArray[id] ) ){
-//					cerr<<" size: "<<size<<" particionesSizeArray["<<id<<"]: "<<particionesSizeArray[id]<<std::endl;
-//					cerr<<" ERROR: El tamaño del archivo no es correcto "<<nameFileR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//					//return 1;
-//				}
-
-//				vector<float> buffer( particionesSizeArray[id] );
-//				pbuf->pubseekpos (0,file.in);
-//				pbuf->sgetn ((char*)&buffer[0],size);
-//				pbuf->close();
-//				file.close();
-
-//				auto it = buffer.begin();
-//				for(int kk=particionesSZo[id]; kk<particionesSZf[id]; kk++){
-//					it++;
-//					int Pz=(particionesSZf[id]+particionesSZo[id]-1-kk)*SX*SY;
-//					for(int jj=particionesSYo[id]; jj<particionesSYf[id]; jj++){
-//						int Ly=jj*SX;
-//						for(int ii=particionesSXo[id]; ii<particionesSXf[id]; ii++){
-//							val[ii+Ly+Pz]=*it;
-//							valID[ii+Ly+Pz]=id;
-
-//							//if(particionesID[id]==55)val[ii+Ly+Pz]=1.0;
-//							it++;
-//						}
-//					}
-//					it++;
-//				}
-//			}//for NParticiones #pragma omp parallel for
 
 			string	iFilePrefix[]={"Vx3D","Vy3D","Vz3D"};
 			for(int iprefix=0; iprefix<3;iprefix++){
@@ -1655,193 +1379,6 @@ int main(int argc, char *argv[])
 				}//for NParticiones #pragma omp parallel for
 			}
 
-//////////////////////////////////////
-//#pragma omp parallel for
-//			for(int id=0; id<NParticiones; id++){
-//				stringstream nameFileVx;
-//				stringstream nameFileVxR;
-//				nameFileVx<<"Vx3D"<<setw(ndigID)<<setfill('0')<<particionesID[id]<<setw(ndigTI)<<setfill('0')<<timeIndex;
-//				nameFileVy<<"Vy3D"<<setw(ndigID)<<setfill('0')<<particionesID[id]<<setw(ndigTI)<<setfill('0')<<timeIndex;
-//				nameFileVz<<"Vz3D"<<setw(ndigID)<<setfill('0')<<particionesID[id]<<setw(ndigTI)<<setfill('0')<<timeIndex;
-//				nameFileVxR<<configdat.path<<"/"<<SubLocation<<"/"<<nameFileVx.str();
-//				nameFileVyR<<configdat.path<<"/"<<SubLocation<<"/"<<nameFileVy.str();
-//				nameFileVzR<<configdat.path<<"/"<<SubLocation<<"/"<<nameFileVz.str();
-
-//				std::ifstream fileVx(nameFileVxR.str().c_str(),std::ios::binary|std::ios::in);
-//				std::ifstream fileVy(nameFileVyR.str().c_str(),std::ios::binary|std::ios::in);
-//				std::ifstream fileVz(nameFileVzR.str().c_str(),std::ios::binary|std::ios::in);
-//				if( fileVx.fail() ){
-//					cerr<<" ERROR: no se puede abrir el archivo "<<nameFileVxR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-//				if( fileVy.fail() ){
-//					cerr<<" ERROR: no se puede abrir el archivo "<<nameFileVyR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-//				if( fileVz.fail() ){
-//					cerr<<" ERROR: no se puede abrir el archivo "<<nameFileVzR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-
-//				std::filebuf* pbufVx = fileVx.rdbuf();
-//				std::filebuf* pbufVy = fileVy.rdbuf();
-//				std::filebuf* pbufVz = fileVz.rdbuf();
-//				std::size_t sizeVx = pbufVx->pubseekoff (0,fileVx.end,fileVx.in);
-//				std::size_t sizeVy = pbufVy->pubseekoff (0,fileVy.end,fileVy.in);
-//				std::size_t sizeVz = pbufVz->pubseekoff (0,fileVz.end,fileVz.in);
-//				if(sizeVx!= (unsigned long)( 4*particionesSizeArray[id] ) ){
-//					cerr<<" size: "<<sizeVx<<" particionesSizeArray["<<id<<"]: "<<particionesSizeArray[id]<<std::endl;
-//					cerr<<" ERROR: El tamaño del archivo no es correcto "<<nameFileVxR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-//				if(sizeVy!= (unsigned long)( 4*particionesSizeArray[id] ) ){
-//					cerr<<" size: "<<sizeVy<<" particionesSizeArray["<<id<<"]: "<<particionesSizeArray[id]<<std::endl;
-//					cerr<<" ERROR: El tamaño del archivo no es correcto "<<nameFileVyR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-//				if(sizeVz!= (unsigned long)( 4*particionesSizeArray[id] ) ){
-//					cerr<<" size: "<<sizeVz<<" particionesSizeArray["<<id<<"]: "<<particionesSizeArray[id]<<std::endl;
-//					cerr<<" ERROR: El tamaño del archivo no es correcto "<<nameFileVzR.str().c_str()<<std::endl;
-//					exit (EXIT_FAILURE);
-//				}
-
-//				vector<float> bufferVx( particionesSizeArray[id] );
-//				pbufVx->pubseekpos (0,fileVx.in);
-//				pbufVx->sgetn ((char*)&bufferVx[0],sizeVx);
-//				pbufVx->close();
-//				fileVx.close();
-
-//				vector<float> bufferVx( particionesSizeArray[id] );
-//				pbufVx->pubseekpos (0,fileVx.in);
-//				pbufVx->sgetn ((char*)&bufferVx[0],sizeVx);
-//				pbufVx->close();
-//				fileVx.close();
-
-//				auto it = bufferVx.begin();
-//				for(int kk=particionesSZo[id]; kk<particionesSZf[id]; kk++){
-//					it++;
-//					int Pz=(particionesSZf[id]+particionesSZo[id]-1-kk)*SX*SY;
-//					for(int jj=particionesSYo[id]; jj<particionesSYf[id]; jj++){
-//						int Ly=jj*SX;
-//						for(int ii=particionesSXo[id]; ii<particionesSXf[id]; ii++){
-//							val[ii+Ly+Pz]=*it;
-//							valID[ii+Ly+Pz]=id;
-
-//							//if(particionesID[id]==55)val[ii+Ly+Pz]=1.0;
-//							it++;
-//						}
-//					}
-//					it++;
-//				}
-//			}//for NParticiones #pragma omp parallel for
-//////////////////////////////////////
-
-//			for(unsigned int j=0;j<configdat.data[i].px.size();j++){
-//				stringstream namePNG_X;
-//				namePNG_X<<"./imagenes/X/"<<nFilePrefix<<"-X"<<setw(calculaCifras(SX))<<setfill('0')<<configdat.data[i].px[j]<<"-TI"<<setw(ndigTI)<<setfill('0')<<timeIndex<<".png";
-//				cout<<namePNG_X.str()<<endl;
-//				std::ofstream outX(namePNG_X.str(), std::ios::binary);
-//				TinyPngOut pngoutX(static_cast<uint32_t>(SY), static_cast<uint32_t>(SZ), outX);
-//				std::vector<uint8_t> lineX(static_cast<size_t>(SY) * 3);
-//				for (int z = SZ-1; z >= 0; z--) {
-//					for (int y = 0; y < SY; y++) {
-//						uint8_t r, g, b;
-//						double f = (val[configdat.data[i].px[j]+SX*y+SX*SY*z]-ns.niceMin)/(ns.niceMax-ns.niceMin);
-//						colorMap1.getColor(f, r, g, b);
-//						lineX[y * 3 + 0] = static_cast<uint8_t>(r);
-//						lineX[y * 3 + 1] = static_cast<uint8_t>(g);
-//						lineX[y * 3 + 2] = static_cast<uint8_t>(b);
-//					}
-//					pngoutX.write(lineX.data(), static_cast<size_t>(SY));
-//				}
-//			}
-
-//			for(unsigned int j=0;j<configdat.data[i].py.size();j++){
-//				stringstream namePNG_Y;
-//				namePNG_Y<<"./imagenes/Y/"<<nFilePrefix<<"-Y"<<setw(calculaCifras(SY))<<setfill('0')<<configdat.data[i].py[j]<<"-TI"<<setw(ndigTI)<<setfill('0')<<timeIndex<<".png";
-//				cout<<namePNG_Y.str()<<endl;
-//				std::ofstream outY(namePNG_Y.str(), std::ios::binary);
-//				TinyPngOut pngoutY(static_cast<uint32_t>(SX), static_cast<uint32_t>(SZ), outY);
-//				std::vector<uint8_t> lineY(static_cast<size_t>(SX) * 3);
-//				for (int z = SZ-1; z >= 0; z--) {
-//					for (int x = 0; x < SX; x++) {
-//						uint8_t r, g, b;
-//						double f = (val[x+SX*configdat.data[i].py[j]+SX*SY*z]-ns.niceMin)/(ns.niceMax-ns.niceMin);
-//						colorMap1.getColor(f, r, g, b);
-//						lineY[x * 3 + 0] = static_cast<uint8_t>(r);
-//						lineY[x * 3 + 1] = static_cast<uint8_t>(g);
-//						lineY[x * 3 + 2] = static_cast<uint8_t>(b);
-//					}
-//					pngoutY.write(lineY.data(), static_cast<size_t>(SX));
-//				}
-
-//			}
-
-//			for(unsigned int j=0;j<configdat.data[i].pz.size();j++){
-//				stringstream namePNG_Z,nameSVG_Z,nameRoot_Z;
-//				nameRoot_Z<<nFilePrefix<<"-Z"<<setw(calculaCifras(SZ))<<setfill('0')<<configdat.data[i].pz[j]<<"-TI"<<setw(ndigTI)<<setfill('0')<<timeIndex;
-//				namePNG_Z<<nameRoot_Z.str()<<".png";
-//				nameSVG_Z<<nameRoot_Z.str()<<".svg";
-//				cout<<namePNG_Z.str()<<endl;
-//				std::ofstream outZ("./imagenes/Z/"+namePNG_Z.str(), std::ios::binary);
-//				vel.back().fileName="./Z/"+namePNG_Z.str();
-//				vel.back().labelColorMap="Vx (m/s)";
-//				TinyPngOut pngoutZ(static_cast<uint32_t>(SX), static_cast<uint32_t>(SY), outZ);
-//				std::vector<uint8_t> lineZ(static_cast<size_t>(SX) * 3);
-//				//cout<<"min:"<<min<<" max:"<<max<<endl;
-//				int index_z=SX*SY*configdat.data[i].pz[j];
-//				for (int y = SY-1; y >= 0; y--) {
-//					int index_yz=SX*y+index_z;
-//					for (int x = 0; x < SX; x++) {
-//						uint8_t r, g, b;
-//						//double f = (val[x+SX*y+SX*SY*cdat.data[i].pz[j]]-ns.niceMin)/(ns.niceMax-ns.niceMin);
-//						int index_xyz = x + index_yz;
-//						int index_xy = x + SX * y;
-//						float v=val[index_xyz];
-//						vel.back().set(x,y,v);
-//						double f = (v-ns.niceMin)/(ns.niceMax-ns.niceMin);
-//						//valmax[index_xy] = std::max( valmax[index_xy], fabs(v) );
-
-//						if( calculateVmax ){
-//							valmax2.set(x,y,std::max( valmax2.get(x,y), fabs(v) ));
-//						}
-
-//						colorMap1.getColor(f, r, g, b);
-//						//if( particionesID[ valID[index_xy] ]==43 ){
-//						//	r=r;
-//						//	g=3*g/4;
-//						//	b=3*b/4;
-//						//}
-
-//						if( id2ijk.at(valID[index_xy]).i % 2 != id2ijk.at(valID[index_xy]).j % 2 ){
-//							r=3*r/4;
-//							g=3*g/4;
-//							b=3*b/4;
-//						}
-//						if( (x-infoData.NXSC())*(x-infoData.NXSC())+(y-infoData.NYSC())*(y-infoData.NYSC())<100 ){
-//							r=r/2;
-//							g=g/2;
-//							b=b/2;
-//						}
-//						if( x==infoData.NXSC() && y==infoData.NYSC() ){
-//							r=0;
-//							g=0;
-//							b=0;
-//						}
-//						lineZ[x * 3 + 0] = static_cast<uint8_t>(r);
-//						lineZ[x * 3 + 1] = static_cast<uint8_t>(g);
-//						lineZ[x * 3 + 2] = static_cast<uint8_t>(b);
-//					}
-//					//cout<<endl;
-//					pngoutZ.write(lineZ.data(), static_cast<size_t>(SX));
-//				}
-//				make_svg_(TXY,timeIndex,"./imagenes/"+nameSVG_Z.str(),vel.back(), slip, colorMap1,ns);
-
-//				for(int iprefix=0; iprefix<3;iprefix++){
-//					vel[iprefix].push_back( data2D<float>(img) );
-//				}
-
-//			}
 
 			//////////////////////////////
 			NiceScale nsxyz(0,dsettings.VELXMAX);
