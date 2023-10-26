@@ -1516,6 +1516,7 @@ int main(int argc, char *argv[])
 		//cout<<endl;
 		pngoutSlip.write(lineSlip.data(), static_cast<size_t>(slipN));
 	}
+	outSlip.close();
 	cout<<slipMin<<" "<<slipMax<<" -> "<<nsSlip.niceMin<<" "<<nsSlip.niceMax<<endl;
 	make_svg_slip(TXY, "./slip.svg", "./slip.png", colorMap3,nsSlip );
 	/***********************/
@@ -1997,6 +1998,10 @@ int main(int argc, char *argv[])
 				make_svg_(TXY,timeIndex,"./imagenes/"+nameSVG_X.str(),vel[X].back(), slip, colorMap1,ns);
 				make_svg_(TXY,timeIndex,"./imagenes/"+nameSVG_Y.str(),vel[Y].back(), slip, colorMap1,ns);
 				make_svg_(TXY,timeIndex,"./imagenes/"+nameSVG_Z.str(),vel[Z].back(), slip, colorMap1,ns);
+				outX.close();
+				outY.close();
+				outZ.close();
+				outXYZ.close();
 
 
 			}
@@ -2122,6 +2127,7 @@ int main(int argc, char *argv[])
 		}
 		pngoutMaxZ.write(lineMaxZ.data(), static_cast<size_t>(SX));
 	}
+	outZ.close();
 	make_svg_max(TXY,"./imagenes/"+nameSVG_MaxZ.str(), valmax2, slip, colorMap2,nsMax, isovel );
 
 	NiceScale nsxyzMax(0,valxyzmax2.Max() );
@@ -2166,6 +2172,7 @@ int main(int argc, char *argv[])
 		}
 		pngoutMaxXYZ.write(lineMaxXYZ.data(), static_cast<size_t>(SX));
 	}
+	outXYZ.close();
 	make_svg_max(TXY,"./imagenes/"+nameSVG_MaxXYZ.str(), valxyzmax2, slip, colorMap2,nsxyzMax, isovelxyz);
 
 	//Oaxaca eq 2 group 1
@@ -2237,6 +2244,7 @@ int main(int argc, char *argv[])
 			}
 			pngoutMMI.write(lineMMI.data(), static_cast<size_t>(SX));
 		}
+		outMMI.close();
 
 		vector<double> vRadio;
 
